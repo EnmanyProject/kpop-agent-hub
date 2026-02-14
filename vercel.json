@@ -1,0 +1,19 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/dashboard/index.html" },
+    { "source": "/index.html", "destination": "/dashboard/index.html" },
+    { "source": "/dashboard.js", "destination": "/dashboard/dashboard.js" },
+    { "source": "/styles.css", "destination": "/dashboard/styles.css" },
+    { "source": "/data/registry.json", "destination": "/registry.json" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
+      ]
+    }
+  ]
+}

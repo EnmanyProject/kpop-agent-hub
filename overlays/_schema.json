@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "K-pop Agent Hub - Project Overlay",
+  "description": "Kustomize-style per-project agent overrides. Base template preserved, overlay applied on generation.",
+  "type": "object",
+  "required": ["version", "project"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version",
+      "enum": ["1.0.0"]
+    },
+    "project": {
+      "type": "string",
+      "description": "Project name matching registry.projects key"
+    },
+    "lastUpdated": {
+      "type": "string",
+      "format": "date",
+      "description": "Last modification date (ISO 8601)"
+    },
+    "agents": {
+      "type": "object",
+      "description": "Per-agent overrides keyed by Korean agent name",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "modelOverride": {
+            "type": "string",
+            "enum": ["opus", "sonnet", "haiku"],
+            "description": "Replace base recommended model"
+          },
+          "roleOverride": {
+            "type": "string",
+            "description": "Replace base role name"
+          },
+          "expertiseOverride": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Replace entire base expertise list"
+          },
+          "expertiseAppend": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Append to base expertise list"
+          },
+          "additionalContext": {
+            "type": "string",
+            "description": "Project-specific context injected into template"
+          },
+          "templatePatches": {
+            "type": "object",
+            "properties": {
+              "prepend": {
+                "type": "string",
+                "description": "Content prepended to generated output"
+              },
+              "append": {
+                "type": "string",
+                "description": "Content appended to generated output"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "globalOverrides": {
+      "type": "object",
+      "description": "Overrides applied to ALL agents in this project",
+      "properties": {
+        "additionalContext": {
+          "type": "string",
+          "description": "Context added to every agent in this project"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

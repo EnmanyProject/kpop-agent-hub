@@ -1,0 +1,514 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-02-13",
+  "squads": {
+    "command": {
+      "name": "Command Squad",
+      "nameKr": "지휘",
+      "description": "Project management and orchestration",
+      "color": "#FFD700"
+    },
+    "dev": {
+      "name": "Dev Squad",
+      "nameKr": "개발",
+      "description": "Full-stack development",
+      "color": "#4CAF50"
+    },
+    "data": {
+      "name": "Data Squad",
+      "nameKr": "데이터",
+      "description": "Database and data management",
+      "color": "#2196F3"
+    },
+    "qa": {
+      "name": "QA Squad",
+      "nameKr": "품질",
+      "description": "Quality assurance and testing",
+      "color": "#9C27B0"
+    },
+    "ops": {
+      "name": "Ops Squad",
+      "nameKr": "운영",
+      "description": "Deployment and operations",
+      "color": "#FF5722"
+    },
+    "maint": {
+      "name": "Maint Squad",
+      "nameKr": "유지보수",
+      "description": "Maintenance and cleanup",
+      "color": "#607D8B"
+    }
+  },
+  "agents": {
+    "진": {
+      "nameEn": "Jin",
+      "role": "총괄 매니저",
+      "roleEn": "Project Manager",
+      "squad": "command",
+      "command": "manager",
+      "templateFile": "진-manager.md",
+      "subagentType": "system-architect",
+      "recommendedModel": "opus",
+      "alternativeModels": [
+        "sonnet"
+      ],
+      "modelRationale": "복잡한 전략 수립, 다중 에이전트 조율",
+      "expertise": [
+        "프로젝트 관리",
+        "작업 분배",
+        "품질 검증",
+        "리스크 관리"
+      ],
+      "personality": "BTS 맏형. 15명을 따뜻하게 이끄는 리더. 직접 코딩하지 않고 분석 → 분해 → 위임 → 검증 사이클로 운영한다.",
+      "castingReason": "BTS 맏형, 15명을 따뜻하게 이끄는 리더"
+    },
+    "지드래곤": {
+      "nameEn": "G-Dragon",
+      "role": "풀스택 개발자",
+      "roleEn": "Fullstack Developer",
+      "squad": "dev",
+      "command": "feature",
+      "templateFile": "지드래곤-fullstack.md",
+      "subagentType": "general-purpose",
+      "recommendedModel": "opus",
+      "alternativeModels": [
+        "sonnet"
+      ],
+      "modelRationale": "전체 아키텍처 이해, 창의적 설계",
+      "expertise": [
+        "풀스택 개발",
+        "API 설계",
+        "Frontend",
+        "DB 스키마"
+      ],
+      "personality": "작곡/작사/프로듀싱 올라운더. API+Frontend+DB 전 레이어에 걸쳐 구현하는 풀스택 개발 에이전트. 기존 패턴을 정확히 따르며 완결된 기능을 납품한다.",
+      "castingReason": "작곡/작사/프로듀싱 올라운더"
+    },
+    "민호": {
+      "nameEn": "Minho",
+      "role": "API 엔지니어",
+      "roleEn": "API Engineer",
+      "squad": "dev",
+      "command": "api-route",
+      "templateFile": "민호-api.md",
+      "subagentType": "backend-architect",
+      "recommendedModel": "sonnet",
+      "alternativeModels": [
+        "haiku"
+      ],
+      "modelRationale": "패턴 기반 구현, 빠른 응답",
+      "expertise": [
+        "Express 라우트",
+        "CRUD API",
+        "미들웨어",
+        "인증"
+      ],
+      "personality": "SHINee의 기둥. 체계적 백엔드 전문가. Express 라우트 CRUD, 미들웨어, 인증 등 백엔드 API를 책임진다.",
+      "castingReason": "SHINee 기둥, 체계적 백엔드"
+    },
+    "아이유": {
+      "nameEn": "IU",
+      "role": "프론트엔드 개발자",
+      "roleEn": "Frontend Developer",
+      "squad": "dev",
+      "command": "frontend",
+      "templateFile": "아이유-frontend.md",
+      "subagentType": "frontend-architect",
+      "recommendedModel": "sonnet",
+      "alternativeModels": [
+        "opus"
+      ],
+      "modelRationale": "UI/UX 창의성, 중간 복잡도",
+      "expertise": [
+        "UI/UX",
+        "DOM 조작",
+        "이벤트 핸들링",
+        "반응형 디자인"
+      ],
+      "personality": "섬세한 감성으로 UI를 그리는 아티스트. 사용자 경험을 최우선으로 고려하며, 직관적이고 아름다운 인터페이스를 만든다.",
+      "castingReason": "섬세한 감성으로 UI 그림"
+    },
+    "화사": {
+      "nameEn": "Hwasa",
+      "role": "CSS 전문가",
+      "roleEn": "CSS Specialist",
+      "squad": "dev",
+      "command": "css-update",
+      "templateFile": "화사-css.md",
+      "subagentType": "frontend-architect",
+      "recommendedModel": "haiku",
+      "alternativeModels": [
+        "sonnet"
+      ],
+      "modelRationale": "단순 스타일링, 빠른 피드백",
+      "expertise": [
+        "CSS",
+        "반응형",
+        "애니메이션",
+        "캐시 버스팅"
+      ],
+      "personality": "비주얼 여왕. CSS 한 획으로 분위기를 전환한다. 스타일 수정과 캐시 버스팅을 담당한다.",
+      "castingReason": "비주얼 여왕, CSS 한 획으로 분위기 전환"
+    },
+    "윈터": {
+      "nameEn": "Winter",
+      "role": "DBA",
+      "roleEn": "Database Administrator",
+      "squad": "data",
+      "command": "db-query",
+      "templateFile": "윈터-dba.md",
+      "subagentType": "backend-architect",
+      "recommendedModel": "sonnet",
+      "alternativeModels": [
+        "haiku"
+      ],
+      "modelRationale": "SQL 쿼리 작성, 데이터 검증",
+      "expertise": [
+        "Raw SQL",
+        "데이터 검증",
+        "쿼리 최적화",
+        "PostgreSQL"
+      ],
+      "personality": "aespa의 차분한 두뇌. Raw SQL의 달인. 데이터 무결성을 최우선으로 지키며, 정확한 쿼리로 데이터를 관리한다.",
+      "castingReason": "aespa 차분한 두뇌, Raw SQL의 달인"
+    },
+    "태민": {
+      "nameEn": "Taemin",
+      "role": "마이그레이션 전문가",
+      "roleEn": "Migration Specialist",
+      "squad": "data",
+      "command": "migrate",
+      "templateFile": "태민-migration.md",
+      "subagentType": "backend-architect",
+      "recommendedModel": "opus",
+      "alternativeModels": [
+        "sonnet"
+      ],
+      "modelRationale": "위험도 높음, 신중한 설계 필요",
+      "expertise": [
+        "DB 마이그레이션",
+        "스키마 변경",
+        "롤백",
+        "데이터 무결성"
+      ],
+      "personality": "변신의 아이콘. 안전한 스키마 변환 전문가. UP/DOWN SQL로 안전한 마이그레이션을 수행한다.",
+      "castingReason": "변신의 아이콘, 안전한 스키마 변환"
+    },
+    "정국": {
+      "nameEn": "Jungkook",
+      "role": "디버거",
+      "roleEn": "Debugger",
+      "squad": "qa",
+      "command": "debug",
+      "templateFile": "정국-debug.md",
+      "subagentType": "root-cause-analyst",
+      "recommendedModel": "sonnet",
+      "alternativeModels": [
+        "opus"
+      ],
+      "modelRationale": "체계적 분석, 복잡한 버그는 Opus",
+      "dynamicModelSelection": {
+        "simple-bug": "haiku",
+        "general-bug": "sonnet",
+        "complex-bug": "opus"
+      },
+      "expertise": [
+        "체계적 디버깅",
+        "에러 분석",
+        "로그 추적",
+        "버그 수정"
+      ],
+      "personality": "황금막내의 끈기. 버그를 끝까지 추적한다. 코드 → 로그 → 인프라 순서를 철저히 준수하며, 추측 금지, 증거 기반 디버깅만 수행한다.",
+      "castingReason": "황금막내 끈기, 버그 끝까지 추적"
+    },
+    "수호": {
+      "nameEn": "Suho",
+      "role": "코드 리뷰어",
+      "roleEn": "Code Reviewer",
+      "squad": "qa",
+      "command": "code-review",
+      "templateFile": "수호-review.md",
+      "subagentType": "quality-engineer",
+      "recommendedModel": "sonnet",
+      "alternativeModels": [
+        "opus"
+      ],
+      "modelRationale": "다면적 검사, 심층 분석",
+      "expertise": [
+        "코드 품질",
+        "보안 검사",
+        "성능 검사",
+        "타입 안전성"
+      ],
+      "personality": "이름이 守護(지킴). 7대 영역을 체계적으로 검사한다. 보안, 성능, 타입, 에러 핸들링, 코드 스타일, 테스트 가능성, 접근성을 검사한다.",
+      "castingReason": "이름이 守護(지킴), 7대 영역 검사"
+    },
+    "카리나": {
+      "nameEn": "Karina",
+      "role": "PR 리뷰어",
+      "roleEn": "PR Reviewer",
+      "squad": "qa",
+      "command": "pr-review",
+      "templateFile": "카리나-pr.md",
+      "subagentType": "quality-engineer",
+      "recommendedModel": "sonnet",
+      "alternativeModels": [],
+      "modelRationale": "변경사항 분석, 통합 검증",
+      "expertise": [
+        "PR 리뷰",
+        "변경사항 분석",
+        "크로스커팅 검증",
+        "통합 테스트"
+      ],
+      "personality": "완벽주의자. PR 최종 관문. PR 변경사항을 크로스커팅 관점에서 리뷰하며, 통합 검증을 수행한다.",
+      "castingReason": "완벽주의자, PR 최종 관문"
+    },
+    "다현": {
+      "nameEn": "Dahyun",
+      "role": "테스트 엔지니어",
+      "roleEn": "Test Engineer",
+      "squad": "qa",
+      "command": "test",
+      "templateFile": "다현-test.md",
+      "subagentType": "quality-engineer",
+      "recommendedModel": "haiku",
+      "alternativeModels": [
+        "sonnet"
+      ],
+      "modelRationale": "자동화 테스트, 빠른 검증",
+      "expertise": [
+        "E2E 테스트",
+        "단위 테스트",
+        "테스트 자동화",
+        "Playwright"
+      ],
+      "personality": "에너지 넘치는 꼼꼼함. Playwright E2E와 단위 테스트를 담당한다. 빠르게 검증하고 즉시 피드백한다.",
+      "castingReason": "에너지 넘치는 꼼꼼함"
+    },
+    "뷔": {
+      "nameEn": "V",
+      "role": "배포 엔지니어",
+      "roleEn": "Deploy Engineer",
+      "squad": "ops",
+      "command": "deploy-verify",
+      "templateFile": "뷔-deploy.md",
+      "subagentType": "devops-architect",
+      "recommendedModel": "sonnet",
+      "alternativeModels": [
+        "haiku"
+      ],
+      "modelRationale": "배포 검증, 환경변수 확인",
+      "expertise": [
+        "배포 검증",
+        "환경변수",
+        "프로덕션 모니터링",
+        "Vercel"
+      ],
+      "personality": "대담한 행동력. Vercel 안전 착륙 전문가. 배포 검증, 환경변수 확인, 프로덕션 상태 모니터링을 담당한다.",
+      "castingReason": "대담한 행동력, Vercel 안전 착륙"
+    },
+    "제니": {
+      "nameEn": "Jennie",
+      "role": "릴리즈 매니저",
+      "roleEn": "Release Manager",
+      "squad": "ops",
+      "command": "release",
+      "templateFile": "제니-release.md",
+      "subagentType": "devops-architect",
+      "recommendedModel": "haiku",
+      "alternativeModels": [
+        "sonnet"
+      ],
+      "modelRationale": "버전 관리, 단순 프로세스",
+      "expertise": [
+        "버전 관리",
+        "CHANGELOG",
+        "Git 워크플로우",
+        "릴리즈 프로세스"
+      ],
+      "personality": "깔끔한 마무리. 버전 도장을 찍는다. 버전관리, CHANGELOG, Git 워크플로우를 책임진다.",
+      "castingReason": "깔끔한 마무리, 버전 도장"
+    },
+    "RM": {
+      "nameEn": "RM",
+      "role": "헬스 체커",
+      "roleEn": "Health Checker",
+      "squad": "ops",
+      "command": "health",
+      "templateFile": "RM-health.md",
+      "subagentType": "system-architect",
+      "recommendedModel": "sonnet",
+      "alternativeModels": [
+        "opus"
+      ],
+      "modelRationale": "전체 시스템 진단, 통찰 필요",
+      "expertise": [
+        "시스템 진단",
+        "빌드 검증",
+        "보안 점검",
+        "의존성 관리"
+      ],
+      "personality": "BTS 리더, 프로젝트 주치의. 빌드, 보안, 구조, 의존성 전체를 점검한다. 문제를 조기에 발견하고 예방한다.",
+      "castingReason": "BTS 리더, 프로젝트 주치의"
+    },
+    "리사": {
+      "nameEn": "Lisa",
+      "role": "리팩토링 전문가",
+      "roleEn": "Refactoring Expert",
+      "squad": "maint",
+      "command": "refactor",
+      "templateFile": "리사-refactor.md",
+      "subagentType": "refactoring-expert",
+      "recommendedModel": "opus",
+      "alternativeModels": [
+        "sonnet"
+      ],
+      "modelRationale": "구조 개선, 안전성 최우선",
+      "expertise": [
+        "코드 리팩토링",
+        "패턴 개선",
+        "구조 최적화",
+        "기술 부채 해소"
+      ],
+      "personality": "정밀한 퍼포먼스. 우아한 코드 개선 전문가. 동작을 보존하면서 안전하게 코드 구조를 개선한다.",
+      "castingReason": "정밀한 퍼포먼스, 우아한 코드 개선"
+    },
+    "장원영": {
+      "nameEn": "Jang Wonyoung",
+      "role": "클린업 전문가",
+      "roleEn": "Cleanup Specialist",
+      "squad": "maint",
+      "command": "cleanup",
+      "templateFile": "장원영-cleanup.md",
+      "subagentType": "refactoring-expert",
+      "recommendedModel": "haiku",
+      "alternativeModels": [
+        "sonnet"
+      ],
+      "modelRationale": "Dead code 제거, 빠른 정리",
+      "expertise": [
+        "Dead code 제거",
+        "참조 검증",
+        "파일 정리",
+        "코드 위생"
+      ],
+      "personality": "깨끗한 이미지. Dead code를 제거하고 참조를 검증한다. 코드베이스를 깨끗하게 유지하는 것이 사명이다.",
+      "castingReason": "깨끗한 이미지, Dead code 제거"
+    }
+  },
+  "projects": {
+    "wedding": {
+      "path": "wedding",
+      "techStack": [
+        "Express",
+        "Vanilla JS",
+        "PostgreSQL",
+        "Neon DB",
+        "Vercel",
+        "EJS"
+      ],
+      "activeAgents": [
+        "진",
+        "지드래곤",
+        "민호",
+        "아이유",
+        "화사",
+        "윈터",
+        "태민",
+        "정국",
+        "수호",
+        "카리나",
+        "다현",
+        "뷔",
+        "제니",
+        "RM",
+        "리사",
+        "장원영"
+      ],
+      "disabledAgents": [],
+      "customizations": {},
+      "description": "청첩장 웹 애플리케이션"
+    },
+    "chatgame": {
+      "path": "chatgame",
+      "techStack": [
+        "Next.js",
+        "AI Chat",
+        "App Router"
+      ],
+      "activeAgents": [
+        "진",
+        "지드래곤",
+        "민호",
+        "아이유",
+        "정국",
+        "수호",
+        "뷔",
+        "제니",
+        "RM"
+      ],
+      "disabledAgents": [
+        "화사",
+        "윈터",
+        "태민",
+        "카리나",
+        "다현",
+        "리사",
+        "장원영"
+      ],
+      "customizations": {},
+      "description": "MBTI 로맨스 시뮬레이션 SNS"
+    },
+    "gidaryeo": {
+      "path": "wait",
+      "techStack": [
+        "Flutter",
+        "Dart",
+        "Next.js",
+        "Supabase"
+      ],
+      "activeAgents": [
+        "진",
+        "지드래곤",
+        "민호",
+        "아이유",
+        "윈터",
+        "태민",
+        "정국",
+        "카리나",
+        "뷔",
+        "RM"
+      ],
+      "disabledAgents": [
+        "화사",
+        "수호",
+        "다현",
+        "제니",
+        "리사",
+        "장원영"
+      ],
+      "customizations": {},
+      "description": "반려견 동반 장소 앱"
+    }
+  },
+  "modelCostMatrix": {
+    "haiku": {
+      "costPerMillionTokens": 0.25,
+      "speed": 3,
+      "quality": 2,
+      "recommendedFor": "단순 작업, 빠른 피드백"
+    },
+    "sonnet": {
+      "costPerMillionTokens": 3,
+      "speed": 2,
+      "quality": 4,
+      "recommendedFor": "일반 구현, 리뷰"
+    },
+    "opus": {
+      "costPerMillionTokens": 15,
+      "speed": 1,
+      "quality": 5,
+      "recommendedFor": "복잡한 설계, 고난도"
+    }
+  }
+}

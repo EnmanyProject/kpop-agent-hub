@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "project": "gidaryeo",
+  "lastUpdated": "2026-02-14",
+  "agents": {
+    "지드래곤": {
+      "expertiseOverride": [
+        "Flutter",
+        "Dart",
+        "Supabase",
+        "모바일 앱"
+      ],
+      "additionalContext": "Flutter 서비스 레이어 패턴 (static 메서드). 크로스플랫폼 (iOS/Android/Web)."
+    },
+    "민호": {
+      "expertiseOverride": [
+        "Next.js 15",
+        "React 19",
+        "shadcn/ui",
+        "Supabase"
+      ],
+      "additionalContext": "관리자 페이지 (admin/) 담당. TanStack Query 훅 패턴."
+    },
+    "아이유": {
+      "expertiseOverride": [
+        "Flutter 위젯",
+        "Material 3",
+        "반응형 UI"
+      ],
+      "additionalContext": "모바일 UI/UX. 12개 화면. AppColors/AppTheme 중앙 관리. Pretendard 폰트."
+    },
+    "윈터": {
+      "expertiseOverride": [
+        "Supabase",
+        "PostgreSQL",
+        "RLS"
+      ],
+      "additionalContext": "places, reviews, profiles 테이블 관리. soft delete 패턴 (is_active). 트리거 관리."
+    },
+    "태민": {
+      "expertiseOverride": [
+        "Supabase Migration",
+        "PostgreSQL",
+        "RLS 정책"
+      ],
+      "additionalContext": "supabase/ 디렉토리 마이그레이션. 7개 카테고리 체계. place_updates 테이블."
+    }
+  },
+  "globalOverrides": {}
+}

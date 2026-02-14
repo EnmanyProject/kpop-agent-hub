@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "maxScore": 1000,
+  "metrics": {
+    "successRate": {
+      "weight": 300,
+      "description": "작업 성공률 (완료된 작업 / 전체 작업)",
+      "calculation": "(successfulTasks / totalTasks) * weight",
+      "dataSource": ["git-commits", "manual-feedback"]
+    },
+    "qualityScore": {
+      "weight": 250,
+      "description": "코드 품질 점수 (리뷰 피드백, 기술 부채, 패턴 준수)",
+      "calculation": "(qualityScore / 100) * weight",
+      "dataSource": ["code-review", "manual-feedback"]
+    },
+    "responseTime": {
+      "weight": 150,
+      "description": "작업 응답 시간 (빠르고 정확한 작업 완료)",
+      "calculation": "(timeScore / 100) * weight",
+      "dataSource": ["git-commits", "timestamps"]
+    },
+    "userSatisfaction": {
+      "weight": 200,
+      "description": "사용자 만족도 (피드백 점수, 재작업 빈도)",
+      "calculation": "(satisfaction / 5.0) * weight",
+      "dataSource": ["manual-feedback"]
+    },
+    "consistency": {
+      "weight": 100,
+      "description": "일관성 (패턴 준수, 코딩 컨벤션, 커밋 메시지 품질)",
+      "calculation": "(consistencyScore / 100) * weight",
+      "dataSource": ["git-commits", "code-review"]
+    }
+  },
+  "ranking": {
+    "S": { "min": 900, "max": 1000, "label": "최우수", "emoji": "🏆", "color": "#FFD700" },
+    "A": { "min": 800, "max": 899, "label": "우수", "emoji": "🟢", "color": "#4CAF50" },
+    "B": { "min": 700, "max": 799, "label": "보통", "emoji": "🟡", "color": "#FFC107" },
+    "C": { "min": 600, "max": 699, "label": "주의", "emoji": "⚠️", "color": "#FF9800" },
+    "D": { "min": 0, "max": 599, "label": "개선 필요", "emoji": "🔴", "color": "#F44336" }
+  },
+  "initialScore": 800,
+  "feedbackScoring": {
+    "success": { "scoreChange": 15, "description": "작업 성공" },
+    "partial": { "scoreChange": 5, "description": "부분 성공 (일부 미비)" },
+    "failure": { "scoreChange": -20, "description": "작업 실패" },
+    "excellent": { "scoreChange": 30, "description": "탁월한 성과" }
+  }
+}

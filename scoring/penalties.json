@@ -1,0 +1,112 @@
+{
+  "version": "1.0.0",
+  "categories": {
+    "process": {
+      "name": "프로세스 위반",
+      "severity": "medium",
+      "basePoints": -15,
+      "examples": [
+        "디버깅 순서 안 지킴 (코드→로그→인프라)",
+        "검증 단계 생략",
+        "파일 설계 계획 없이 코딩",
+        "테스트 없이 커밋"
+      ]
+    },
+    "quality": {
+      "name": "품질 문제",
+      "severity": "high",
+      "basePoints": -25,
+      "examples": [
+        "버그 유발 코드 작성",
+        "부분 구현 (미완성 코드)",
+        "기술 부채 생성 (any 타입, TODO, 매직 넘버)",
+        "보안 취약점 도입"
+      ]
+    },
+    "communication": {
+      "name": "소통 실패",
+      "severity": "low",
+      "basePoints": -10,
+      "examples": [
+        "거짓 완료 보고",
+        "사용자 피드백 무시",
+        "불명확한 보고서",
+        "변경사항 미고지"
+      ]
+    },
+    "critical": {
+      "name": "치명적 오류",
+      "severity": "critical",
+      "basePoints": -100,
+      "examples": [
+        "데이터 손실",
+        "프로덕션 장애 유발",
+        "보안 취약점 (XSS, SQL Injection)",
+        "DB 스키마 파괴"
+      ]
+    }
+  },
+  "escalation": {
+    "level1": {
+      "name": "1차 위반",
+      "multiplier": 1,
+      "warningLevel": "⚠️",
+      "actions": [
+        "점수 차감 (basePoints × 1)",
+        "자동 경고 기록",
+        "개선 영역 식별"
+      ]
+    },
+    "level2": {
+      "name": "2차 위반 (같은 카테고리, 30일 이내)",
+      "multiplier": 2,
+      "warningLevel": "🔴",
+      "actions": [
+        "점수 차감 (basePoints × 2)",
+        "경고 레벨 업그레이드",
+        "개선 기회 할당 (5건 성공 시 +30점 회복)"
+      ],
+      "improvementMission": {
+        "requiredSuccesses": 5,
+        "recoveryPoints": 30,
+        "timeLimit": "30일"
+      }
+    },
+    "level3": {
+      "name": "3차 위반 (같은 카테고리, 60일 이내)",
+      "multiplier": 3,
+      "warningLevel": "🚨",
+      "actions": [
+        "점수 차감 (basePoints × 3)",
+        "심각 경고",
+        "교체 검토 상태",
+        "2주 내 +50점 회복 미션"
+      ],
+      "improvementMission": {
+        "requiredSuccesses": 8,
+        "recoveryPoints": 50,
+        "timeLimit": "14일"
+      }
+    },
+    "level4": {
+      "name": "4차 위반 또는 치명적 오류 3회",
+      "actions": [
+        "에이전트 교체",
+        "백업 에이전트 투입 (동일 squad 또는 general-purpose)",
+        "교체된 에이전트는 30일 '훈련' 상태",
+        "30일 후 재평가"
+      ],
+      "replacementPolicy": {
+        "trainingPeriod": "30일",
+        "reEvaluation": true,
+        "backupStrategy": "same-squad-first"
+      }
+    }
+  },
+  "windowPeriods": {
+    "repeatViolation": "30일",
+    "escalationWindow": "60일",
+    "penaltyDecay": "90일",
+    "decayDescription": "90일간 같은 카테고리 위반 없으면 에스컬레이션 레벨 1단계 감소"
+  }
+}

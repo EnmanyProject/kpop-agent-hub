@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0",
+  "project": "chatgame",
+  "lastUpdated": "2026-02-14",
+  "agents": {
+    "민호": {
+      "expertiseOverride": [
+        "Next.js API Routes",
+        "AI 프롬프트",
+        "OpenAI API"
+      ],
+      "additionalContext": "2x2 프롬프트 매트릭스 (Normal/Spicy x 1인칭/3인칭). adventure-stream 엔진. sns-app/ 디렉토리에서만 작업."
+    },
+    "아이유": {
+      "expertiseOverride": [
+        "Next.js App Router",
+        "React",
+        "채팅 UI",
+        "Tailwind CSS"
+      ],
+      "additionalContext": "adventure-stream 대화 엔진 UI. i18n 다국어 필수 (ko/en/ja/zh-CN/zh-TW). sns-app/ 디렉토리에서만 작업."
+    },
+    "지드래곤": {
+      "expertiseOverride": [
+        "Next.js 15",
+        "TypeScript",
+        "Supabase",
+        "AI Chat"
+      ],
+      "additionalContext": "MBTI 로맨스 시뮬레이션 SNS 전체 아키텍처. sns-app/ 디렉토리에서만 작업. 루트 프로젝트는 레거시."
+    }
+  },
+  "globalOverrides": {}
+}

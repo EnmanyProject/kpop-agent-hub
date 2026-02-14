@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K-pop Agent Hub</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <h1 class="logo">K-pop Agent Hub</h1>
+      <span class="version-badge">v1.0</span>
+    </div>
+    <div class="header-right">
+      <button id="btn-refresh" class="header-btn" title="Refresh Data">Refresh</button>
+      <button id="btn-new-project" class="header-btn btn-accent" title="New Project">+ New Project</button>
+      <span id="auto-refresh-indicator" class="refresh-indicator">Auto-refresh: 30s</span>
+    </div>
+  </header>
+
+  <main id="app-main">
+    <!-- Content rendered by dashboard.js -->
+    <div class="loading-screen">
+      <div class="loading-spinner"></div>
+      <p>Loading Agent Hub...</p>
+    </div>
+  </main>
+
+  <!-- Agent Profile Modal -->
+  <div id="modal-agent" class="modal-overlay" style="display:none;">
+    <div class="modal-container modal-large">
+      <div class="modal-header">
+        <h2 id="modal-agent-title"></h2>
+        <button class="modal-close" data-close="modal-agent">&times;</button>
+      </div>
+      <div id="modal-agent-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- New Project Modal -->
+  <div id="modal-new-project" class="modal-overlay" style="display:none;">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>New Project</h2>
+        <button class="modal-close" data-close="modal-new-project">&times;</button>
+      </div>
+      <div id="modal-new-project-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Add Skill Modal -->
+  <div id="modal-add-skill" class="modal-overlay" style="display:none;">
+    <div class="modal-container modal-small">
+      <div class="modal-header">
+        <h2>Add Skill</h2>
+        <button class="modal-close" data-close="modal-add-skill">&times;</button>
+      </div>
+      <div id="modal-add-skill-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Template Editor Modal -->
+  <div id="modal-template" class="modal-overlay" style="display:none;">
+    <div class="modal-container modal-fullscreen">
+      <div class="modal-header">
+        <h2 id="modal-template-title">Template Editor</h2>
+        <button class="modal-close" data-close="modal-template">&times;</button>
+      </div>
+      <div id="modal-template-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+
+  <!--
+  ============================================================
+  Express Server for Local Development
+  ============================================================
+  To run this dashboard locally with data loading support:
+
+  node -e "const e=require('express'),a=e();a.use(e.static('C:/Users/dosik/.claude/agents/dashboard'));a.use('/data',e.static('C:/Users/dosik/.claude/agents'));a.use('/projects',e.static('C:/Users/dosik'));a.listen(3456,()=>console.log('Dashboard: http://localhost:3456'))"
+
+  Then open: http://localhost:3456
+
+  Paths served:
+    /              -> dashboard files (index.html, styles.css, dashboard.js)
+    /data/         -> agents directory (registry.json, scoring/*, etc.)
+    /projects/     -> project root (wedding/.claude/agent-scores.json, etc.)
+  ============================================================
+  -->
+</body>
+</html>
