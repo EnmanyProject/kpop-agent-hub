@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 const AGENTS_DIR = path.join(__dirname, '..');
-const BASE_DIR = path.join(__dirname, '..', '..', '..');
+const BASE_DIR = require('os').homedir();
 const OVERLAYS_DIR = path.join(AGENTS_DIR, 'overlays');
 
 function loadRegistry() {
@@ -122,7 +122,7 @@ function getActivityLogFooter(agentName, agentCommand, projectName) {
 
 git commit 시 post-commit hook이 자동으로 활동을 기록한다.
 커밋 메시지에 작업 내용을 명확히 적으면 자동 분류된다.
-수동 기록이 필요하면: \`node C:/Users/dosik/.claude/agents/scripts/log-activity.js ${projectName} ${agentName} ${agentCommand} [result] "[요약]"\`
+수동 기록이 필요하면: \`node ${path.join(AGENTS_DIR, 'scripts', 'log-activity.js').replace(/\\/g, '/')} ${projectName} ${agentName} ${agentCommand} [result] "[요약]"\`
 `;
 }
 
@@ -306,7 +306,8 @@ function generateAgent(projectName, agentName) {
     PROJECT_MISSION: mission ? mission.mission : '(미션 미설정)',
     PROJECT_PHASE: mission ? mission.currentPhase : '',
     SPRINT_NAME: sprint ? sprint.sprintName : '(스프린트 미설정)',
-    SPRINT_GOALS: formatSprintGoals(sprint)
+    SPRINT_GOALS: formatSprintGoals(sprint),
+    AGENTS_SCRIPTS_PATH: path.join(AGENTS_DIR, 'scripts').replace(/\\/g, '/')
   };
 
   // Substitute

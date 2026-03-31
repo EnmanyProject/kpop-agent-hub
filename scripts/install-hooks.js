@@ -12,8 +12,9 @@ const fs = require('fs');
 const path = require('path');
 
 const AGENTS_DIR = path.join(__dirname, '..');
-const BASE_DIR = path.join(__dirname, '..', '..', '..');
 const LOGGER_PATH = path.join(__dirname, 'git-post-commit-logger.js').replace(/\\/g, '/');
+// 홈 디렉토리 자동 감지 (경로 차이 해소: ~/.claude/agents/ vs ~/agents/)
+const BASE_DIR = require('os').homedir();
 
 const HOOK_MARKER = '# K-pop Agent Hub Activity Logger';
 

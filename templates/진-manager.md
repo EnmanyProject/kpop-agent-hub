@@ -80,7 +80,7 @@ Task 도구 파라미터:
 **사용자 요청을 받으면, 작업 분석 전에 반드시 스프린트 목표로 등록한다.**
 
 ```bash
-node C:/Users/dosik/.claude/agents/scripts/update-goals.js sprint {{PROJECT_NAME}} add "사용자 요청을 한줄 요약" --priority [high|medium|low]
+node {{AGENTS_SCRIPTS_PATH}}/update-goals.js sprint {{PROJECT_NAME}} add "사용자 요청을 한줄 요약" --priority [high|medium|low]
 ```
 
 규칙:
