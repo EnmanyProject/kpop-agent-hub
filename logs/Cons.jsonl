@@ -1,0 +1,3 @@
+{"ts":"2026-03-30T14:02:44.605Z","agent":"아이유","action":"frontend","model":"sonnet","goal":null,"files":[],"result":"success","summary":"메인 화면 위젯 구현","tokens":{"input":10000,"output":3000},"cost":0.075}
+{"ts":"2026-03-30T14:23:16.609Z","agent":"auto","action":"debug","model":"sonnet","goal":null,"files":["lib/screens/auth/splash_screen.dart","web/index.html"],"result":"success","summary":"fix: PWA 텍스트 플레이스홀더 깜빡임 수정 — font-display:block + fonts.ready 대기 + 스플래시 3초","commit":"14c5d1c","source":"git-hook"}
+{"ts":"2026-03-30T15:17:27.374Z","agent":"진","action":"cleanup","model":"opus","goal":null,"files":[".claude/commands/manager.md"],"result":"success","summary":"chore: 진 매니저 업데이트 — 자동 목표 등록 + E2E 리포트 + 비용 인식","commit":"b5432cb","source":"git-hook"}

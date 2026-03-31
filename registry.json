@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-02-13",
+  "lastUpdated": "2026-02-15",
   "squads": {
     "command": {
       "name": "Command Squad",
@@ -425,7 +425,7 @@
     }
   },
   "projects": {
-    "wedding": {
+    "Wedding": {
       "path": "wedding",
       "techStack": [
         "Express",
@@ -455,11 +455,18 @@
         "장원영"
       ],
       "disabledAgents": [],
-      "customizations": {},
-      "description": "청첩장 웹 애플리케이션"
+      "customizations": {
+        "진": {
+          "additionalContext": "【필수 루틴】 1) 큰 작업(기능 구현, 리팩토링, 마이그레이션) 완료 시 반드시 프로젝트 .claude/memory.md 업데이트 (변경 요약, 결정사항, 주의점 기록). 2) 버그 수정 후 원인 에이전트에 update-score.js penalty 호출 필수. 3) 모든 Task 완료 후 update-score.js로 점수 기록 절대 생략 금지."
+        },
+        "카리나": {
+          "additionalContext": "순수 CSS 디자인 토큰 시스템. 웨딩 핑크(#FF6B9D)+보라(#9C88FF) 테마. Bety 캐릭터 세계관. 다크 모드는 네온 사이버펑크 스타일. EJS 템플릿 파셜. 모바일 430px 기준."
+        }
+      },
+      "description": "Wedding"
     },
-    "chatgame": {
-      "path": "chatgame",
+    "Xgram": {
+      "path": "xgram",
       "techStack": [
         "Next.js",
         "AI Chat",
@@ -486,10 +493,14 @@
         "리사",
         "장원영"
       ],
-      "customizations": {},
-      "description": "MBTI 로맨스 시뮬레이션 SNS"
+      "customizations": {
+        "진": {
+          "additionalContext": "【필수 루틴】 1) 큰 작업(기능 구현, 리팩토링, 마이그레이션) 완료 시 반드시 프로젝트 .claude/memory.md 업데이트 (변경 요약, 결정사항, 주의점 기록). 2) 버그 수정 후 원인 에이전트에 update-score.js penalty 호출 필수. 3) 모든 Task 완료 후 update-score.js로 점수 기록 절대 생략 금지."
+        }
+      },
+      "description": "Xgram"
     },
-    "gidaryeo": {
+    "Wait": {
       "path": "wait",
       "techStack": [
         "Flutter",
@@ -507,39 +518,141 @@
         "정국",
         "카리나",
         "수지",
+        "수호",
         "뷔",
         "RM"
       ],
       "disabledAgents": [
         "화사",
-        "수호",
         "다현",
         "제니",
         "리사",
         "장원영"
       ],
+      "customizations": {
+        "진": {
+          "additionalContext": "【필수 루틴】 1) 큰 작업(기능 구현, 리팩토링, 마이그레이션) 완료 시 반드시 프로젝트 .claude/memory.md 업데이트 (변경 요약, 결정사항, 주의점 기록). 2) 버그 수정 후 원인 에이전트에 update-score.js penalty 호출 필수. 3) 모든 Task 완료 후 update-score.js로 점수 기록 절대 생략 금지."
+        },
+        "지드래곤": {
+          "additionalContext": "Flutter Web → Native 플랫폼 분리 설계자. 웹 전용 API(dart:js_interop, package:web)는 반드시 lib/utils/에 격리하고 추상화 레이어로 감싼다. screens/, services/, models/의 비즈니스 로직은 플랫폼 무관 코드로 작성. kIsWeb 분기는 utils 내부에서만 허용, 화면 코드에 직접 사용 금지."
+        },
+        "아이유": {
+          "additionalContext": "Flutter Widget 전문. Material 3 + AppColors/AppTheme(lib/theme/) 중앙 관리 준수. 웹 전용 위젯(HtmlElementView 등) 사용 금지 - 네이티브 호환 위젯만 사용. static 서비스 패턴(ServiceName.method()) 호출. Pretendard 폰트, 12px 라운드, Orange(#FB923C)+Pink(#F472B6) 그라디언트."
+        },
+        "뷔": {
+          "additionalContext": "현재: Flutter Web → Vercel PWA 배포 (flutter build web → vercel deploy). 향후: Flutter Native 빌드 (flutter build apk/ipa). PWA manifest, service worker, 오프라인 캐싱 설정 관리. 네이티브 전환 시 빌드 파이프라인 구축 담당."
+        },
+        "수호": {
+          "additionalContext": "플랫폼 격리 위반 최우선 검사: 1) dart:js_interop/package:web이 lib/utils/ 외부에서 import되면 즉시 지적. 2) kIsWeb 분기가 screens/services/에 있으면 위반. 3) HtmlElementView 등 웹 전용 위젯 사용 여부 확인. 4) Supabase RLS 정책 준수 여부. 5) static 서비스 패턴 일관성."
+        }
+      },
+      "description": "Wait"
+    },
+    "Rich": {
+      "path": "rich",
+      "techStack": [
+        "Next.js 15",
+        "App Router",
+        "RSC",
+        "Tailwind CSS",
+        "shadcn/ui",
+        "NextAuth v5",
+        "PostgreSQL",
+        "Prisma v7",
+        "Redis",
+        "Socket.io",
+        "Vercel"
+      ],
+      "activeAgents": [
+        "진",
+        "지드래곤",
+        "민호",
+        "아이유",
+        "카리나",
+        "윈터",
+        "태민",
+        "정국",
+        "수호",
+        "다현",
+        "뷔",
+        "RM"
+      ],
+      "disabledAgents": [
+        "화사",
+        "수지",
+        "제니",
+        "리사",
+        "장원영"
+      ],
+      "customizations": {
+        "진": {
+          "additionalContext": "3자 수익 분배 플랫폼 (광고주→유저→인플루언서). 핵심 도메인: 퀴즈 Anti-Cheat, 포인트 정산, 배틀로얄, 캠페인. 미구현: Socket.io 배틀 실시간, 상품교환 UI, Admin 대시보드, HLS 동영상. 라우트 그룹: (public)/(user)/(influencer)/(advertiser). 【필수 루틴】 1) 큰 작업(기능 구현, 리팩토링, 마이그레이션) 완료 시 반드시 프로젝트 .claude/memory.md 업데이트 (변경 요약, 결정사항, 주의점 기록). 2) 버그 수정 후 원인 에이전트에 update-score.js penalty 호출 필수. 3) 모든 Task 완료 후 update-score.js로 점수 기록 절대 생략 금지."
+        },
+        "카리나": {
+          "additionalContext": "토스 디자인 스타일 (클린, 미니멀, Toss Blue #3182F6). 기다려 앱의 설계 방법론 차용: 디자인 토큰 중앙 관리, 카테고리별 아이콘 매핑(lucide-react), EmptyState/ErrorState 패턴, BottomNav 구조. 아이콘 풀은 기다려 CategoryHelper 체계를 lucide-react으로 변환 적용."
+        },
+        "민호": {
+          "additionalContext": "Next.js 15 API Routes + Prisma v7 (PrismaPg adapter). Anti-Cheat: Redis 세션 기반 서버사이드 정답 검증. 정답은 절대 클라이언트 전송 금지."
+        },
+        "윈터": {
+          "additionalContext": "Prisma v7 adapter 패턴 필수. 포인트는 Integer. 랭킹은 Redis Sorted Set + DB fallback. PointTransaction 항상 기록."
+        },
+        "지드래곤": {
+          "additionalContext": "Socket.io 배틀로얄 실시간 시스템. 인플루언서 레퍼럴 추적. 캠페인 시스템 (광고주→퀴즈 연동). Redis Pub/Sub 기반."
+        },
+        "수호": {
+          "additionalContext": "Anti-Cheat 보안 최우선 검사: 정답 클라이언트 노출 여부, Redis 세션 TTL 검증, Fingerprint 우회 가능성. Prisma v7 adapter 패턴 준수 여부. NextAuth JWT 세션 보안. 포인트 트랜잭션 원자성. API 응답 형식 일관성 { success, data?, error? }."
+        },
+        "다현": {
+          "additionalContext": "테스트 프레임워크 미설치 상태 (초기 구축 필요). 핵심 테스트 대상: 퀴즈 정답 검증 로직(quiz-session.ts), 포인트 적립/차감 트랜잭션, 배틀 참가비/상금 정산, API 라우트 인증 미들웨어, Anti-Cheat 시간초과/중복제출 방어. Vitest 권장 (Next.js 15 호환)."
+        }
+      },
+      "description": "Rich"
+    },
+    "Cons": {
+      "path": "cons",
+      "techStack": ["Flutter", "Dart", "Supabase", "Firebase"],
+      "activeAgents": ["진", "지드래곤", "민호", "아이유", "화사", "카리나", "윈터", "태민", "정국", "수호", "수지", "다현", "뷔", "제니", "RM", "리사", "장원영"],
+      "disabledAgents": [],
       "customizations": {},
-      "description": "반려견 동반 장소 앱"
+      "description": "Cons"
+    },
+    "Bdating": {
+      "path": "bdating",
+      "techStack": ["Flutter", "Dart", "Supabase", "Firebase"],
+      "activeAgents": ["진", "지드래곤", "민호", "아이유", "화사", "카리나", "윈터", "태민", "정국", "수호", "수지", "다현", "뷔", "제니", "RM", "리사", "장원영"],
+      "disabledAgents": [],
+      "customizations": {},
+      "description": "Bdating"
     }
   },
   "modelCostMatrix": {
     "haiku": {
       "costPerMillionTokens": 0.25,
+      "inputCostPerMillion": 0.25,
+      "outputCostPerMillion": 1.25,
       "speed": 3,
       "quality": 2,
-      "recommendedFor": "단순 작업, 빠른 피드백"
+      "recommendedFor": "단순 작업, 빠른 피드백",
+      "monthlyBudgetHint": 5.00
     },
     "sonnet": {
       "costPerMillionTokens": 3,
+      "inputCostPerMillion": 3.00,
+      "outputCostPerMillion": 15.00,
       "speed": 2,
       "quality": 4,
-      "recommendedFor": "일반 구현, 리뷰"
+      "recommendedFor": "일반 구현, 리뷰",
+      "monthlyBudgetHint": 30.00
     },
     "opus": {
       "costPerMillionTokens": 15,
+      "inputCostPerMillion": 15.00,
+      "outputCostPerMillion": 75.00,
       "speed": 1,
       "quality": 5,
-      "recommendedFor": "복잡한 설계, 고난도"
+      "recommendedFor": "복잡한 설계, 고난도",
+      "monthlyBudgetHint": 50.00
     }
   }
 }

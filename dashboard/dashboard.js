@@ -9,6 +9,9 @@ class AgentDashboard {
     this.registry = null;
     this.projectScores = {};
     this.projectOverlays = {};
+    this.goalsData = { missions: {}, sprints: {} };
+    this.logsData = {};
+    this.logsSummary = {};
     this.currentView = 'overview';
     this.currentProject = null;
     this.refreshInterval = null;
@@ -46,13 +49,34 @@ class AgentDashboard {
     this.registry = this.generateFallbackRegistry();
   }
 
+  async loadBundledScores() {
+    if (this._bundledScores !== undefined) return this._bundledScores;
+    try {
+      const res = await fetch('bundled-scores.json');
+      if (res.ok) {
+        const data = await res.json();
+        this._bundledScores = data.projects || {};
+        return this._bundledScores;
+      }
+    } catch (e) { /* not available */ }
+    this._bundledScores = null;
+    return null;
+  }
+
   async loadProjectScores(projectName) {
     if (this.projectScores[projectName]) return this.projectScores[projectName];
 
     const project = this.registry.projects[projectName];
     if (!project) return null;
 
-    // Only fetch score files on localhost (they don't exist on Vercel)
+    // 1. Try bundled scores (works on both localhost and Vercel)
+    const bundled = await this.loadBundledScores();
+    if (bundled && bundled[projectName]) {
+      this.projectScores[projectName] = bundled[projectName];
+      return bundled[projectName];
+    }
+
+    // 2. Try direct file access (localhost only)
     const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     if (isLocal) {
       const paths = [
@@ -71,6 +95,7 @@ class AgentDashboard {
       }
     }
 
+    // 3. Fallback: generate random scores
     this.projectScores[projectName] = this.generateFallbackScores(projectName);
     return this.projectScores[projectName];
   }
@@ -103,6 +128,32 @@ class AgentDashboard {
     return agentOverlay && Object.keys(agentOverlay).length > 0;
   }
 
+  async loadGoals() {
+    try {
+      const res = await fetch('/api/goals');
+      if (res.ok) {
+        this.goalsData = await res.json();
+      }
+    } catch (e) { /* fallback */ }
+  }
+
+  async loadAllLogs() {
+    try {
+      const res = await fetch('/api/logs');
+      if (res.ok) {
+        this.logsData = await res.json();
+      }
+    } catch (e) { /* fallback */ }
+  }
+
+  async loadProjectLogSummary(projectName) {
+    if (this.logsSummary[projectName]) return;
+    try {
+      const res = await fetch(`/api/logs/${encodeURIComponent(projectName)}/summary`);
+      if (res.ok) this.logsSummary[projectName] = await res.json();
+    } catch (e) { /* fallback */ }
+  }
+
   async loadAllData() {
     await this.loadRegistry();
     if (!this.registry) return;
@@ -110,7 +161,10 @@ class AgentDashboard {
     const projectNames = Object.keys(this.registry.projects || {});
     await Promise.all([
       ...projectNames.map(name => this.loadProjectScores(name)),
-      this.loadProjectOverlays()
+      ...projectNames.map(name => this.loadProjectLogSummary(name)),
+      this.loadProjectOverlays(),
+      this.loadGoals(),
+      this.loadAllLogs()
     ]);
   }
 
@@ -284,81 +338,102 @@ class AgentDashboard {
 
     let html = '';
 
-    // Stats Grid
+    // Stats Grid (활동 로그 기반)
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    let weekActivity = 0, weekCost = 0, activeGoals = 0;
+    Object.values(this.logsData).forEach(p => {
+      weekActivity += (p.recent || []).filter(l => l.ts >= weekAgo).length;
+      // 전체 활동 카운트 사용 (정확한 주간 필터는 서버에서)
+      weekActivity = Math.max(weekActivity, p.total || 0);
+      weekCost += p.cost || 0;
+    });
+    Object.values(this.goalsData.sprints || {}).forEach(s => {
+      activeGoals += (s.goals || []).filter(g => g.status === 'in-progress' || g.status === 'todo').length;
+    });
+
     html += `<div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Total Agents</div>
-        <div class="stat-value pink">${stats.totalAgents}</div>
-        <div class="stat-sub">${Object.keys(this.registry.agents || {}).length} registered</div>
+        <div class="stat-value pink">${Object.keys(this.registry.agents || {}).length}</div>
+        <div class="stat-sub">${stats.projectCount} projects</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Avg Score</div>
-        <div class="stat-value purple">${stats.avgScore}</div>
-        <div class="stat-sub">/ 1000</div>
+        <div class="stat-label">Total Activity</div>
+        <div class="stat-value purple">${weekActivity}</div>
+        <div class="stat-sub">logged actions</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Active Projects</div>
-        <div class="stat-value cyan">${stats.projectCount}</div>
-        <div class="stat-sub">${projects.join(', ') || 'none'}</div>
+        <div class="stat-label">Est. Cost</div>
+        <div class="stat-value cyan">$${weekCost.toFixed(2)}</div>
+        <div class="stat-sub">estimated total</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Warnings</div>
-        <div class="stat-value ${stats.warningCount > 0 ? 'red' : 'green'}">${stats.warningCount}</div>
-        <div class="stat-sub">agents below B rank</div>
+        <div class="stat-label">Active Goals</div>
+        <div class="stat-value ${activeGoals > 0 ? 'gold' : 'green'}">${activeGoals}</div>
+        <div class="stat-sub">sprint goals</div>
       </div>
     </div>`;
 
-    // Top Performers
+    // 최근 활동 피드 (Top Performers 대체)
+    const allRecent = [];
+    Object.entries(this.logsData).forEach(([proj, data]) => {
+      (data.recent || []).forEach(l => allRecent.push({ ...l, project: proj }));
+    });
+    allRecent.sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
+
     html += `<div class="section-header">
-      <span class="section-title">Top Performers</span>
-      <span class="section-badge">Best across all projects</span>
+      <span class="section-title">Recent Activity</span>
+      <span class="section-badge">latest actions</span>
     </div>`;
-    html += '<div class="top-performers">';
-    if (stats.topPerformers.length === 0) {
-      html += '<div class="empty-state"><div class="empty-state-icon">--</div><div class="empty-state-text">No agent data available</div></div>';
+    html += '<div class="activity-feed">';
+    if (allRecent.length === 0) {
+      html += '<div class="empty-state"><div class="empty-state-icon">--</div><div class="empty-state-text">No activity logged yet</div></div>';
     } else {
-      stats.topPerformers.forEach((agent, idx) => {
-        const regAgent = this.registry.agents[agent.name] || {};
-        const modelInfo = this.getModelIcon(agent.currentModel || agent.model || regAgent.recommendedModel);
+      const resultIcon = { success: '<span style="color:var(--green)">&#10003;</span>', failure: '<span style="color:var(--red)">&#10007;</span>', partial: '<span style="color:var(--orange)">&#9651;</span>', breakthrough: '<span style="color:var(--gold)">&#9733;</span>' };
+      allRecent.slice(0, 10).forEach(l => {
+        const agent = this.registry.agents[l.agent] || {};
+        const icon = resultIcon[l.result] || '?';
+        const costStr = l.cost ? `<span class="activity-cost">$${l.cost.toFixed(3)}</span>` : '';
+        const timeStr = l.ts ? new Date(l.ts).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
         html += `
-        <div class="performer-card" data-agent="${this.escapeHtml(agent.name)}" data-project="${this.escapeHtml(agent.project)}">
-          <div class="performer-rank-badge rank-${idx + 1}">${idx + 1}</div>
-          <div class="performer-info">
-            <div class="performer-name">
-              ${this.escapeHtml(agent.name)}
-              <span class="agent-name-en">${this.escapeHtml(regAgent.nameEn || '')}</span>
-            </div>
-            <div class="performer-role">${this.escapeHtml(regAgent.role || regAgent.roleEn || '')}</div>
+        <div class="activity-item" data-agent="${this.escapeHtml(l.agent)}" data-project="${this.escapeHtml(l.project)}">
+          <span class="activity-icon">${icon}</span>
+          <div class="activity-info">
+            <span class="activity-agent">${this.escapeHtml(l.agent)}</span>
+            <span class="activity-action">${this.escapeHtml(l.action)}</span>
+            <span class="activity-summary">${this.escapeHtml(l.summary || '')}</span>
           </div>
-          <div class="performer-score">${agent.totalScore}</div>
+          <div class="activity-meta">
+            ${costStr}
+            <span class="activity-time">${timeStr}</span>
+            <span class="activity-project">${this.escapeHtml(l.project)}</span>
+          </div>
         </div>`;
       });
     }
     html += '</div>';
 
-    // Warnings
-    if (stats.warnings.length > 0) {
+    // 스프린트 목표 요약
+    const sprintProjects = Object.entries(this.goalsData.sprints || {}).filter(([_, s]) => s.goals && s.goals.length > 0);
+    if (sprintProjects.length > 0) {
       html += `<div class="section-header">
-        <span class="section-title">Needs Improvement</span>
-        <span class="section-badge">${stats.warnings.length} agents</span>
+        <span class="section-title">Sprint Goals</span>
+        <span class="section-badge">${activeGoals} active</span>
       </div>`;
-      html += '<div class="warnings-list">';
-      stats.warnings.forEach(agent => {
-        const regAgent = this.registry.agents[agent.name] || {};
-        html += `
-        <div class="warning-item" data-agent="${this.escapeHtml(agent.name)}" data-project="${this.escapeHtml(agent.project)}">
-          <span class="warning-icon">${this.getRankEmoji(agent.rank)}</span>
-          <div class="warning-text">
-            <strong>${this.escapeHtml(agent.name)}</strong> (${this.escapeHtml(regAgent.nameEn || '')}) -
-            ${this.escapeHtml(regAgent.role || '')} in ${this.escapeHtml(agent.project)}
-          </div>
-          <span class="warning-score">${agent.totalScore}</span>
-        </div>`;
+      html += '<div class="goals-overview">';
+      sprintProjects.forEach(([projName, sprint]) => {
+        html += `<div class="goal-project-group"><div class="goal-project-name">${this.escapeHtml(projName)} — ${this.escapeHtml(sprint.sprintName || '')}</div>`;
+        sprint.goals.forEach(g => {
+          const statusCls = g.status === 'done' ? 'goal-done' : g.status === 'in-progress' ? 'goal-active' : 'goal-todo';
+          const priCls = g.priority === 'high' ? 'pri-high' : g.priority === 'low' ? 'pri-low' : 'pri-med';
+          html += `<div class="goal-item ${statusCls}"><span class="goal-id">${g.id}</span><span class="goal-title">${this.escapeHtml(g.title)}</span><span class="goal-pri ${priCls}">${g.priority}</span><span class="goal-status">${g.status}</span></div>`;
+        });
+        html += '</div>';
       });
       html += '</div>';
     }
 
-    // Project Tabs
+    // Project Tabs + Goals/Cost 탭
     html += `<div class="section-header mt-16">
       <span class="section-title">Projects</span>
     </div>`;
@@ -368,6 +443,9 @@ class AgentDashboard {
       const proj = this.registry.projects[name];
       html += `<button class="project-tab ${this.currentView === name ? 'active' : ''}" data-view="${this.escapeHtml(name)}">${this.escapeHtml(proj.description || name)}</button>`;
     });
+    html += `<span class="tab-separator">|</span>`;
+    html += `<button class="project-tab tab-goals ${this.currentView === 'goals' ? 'active' : ''}" data-view="goals">Goals</button>`;
+    html += `<button class="project-tab tab-cost ${this.currentView === 'cost' ? 'active' : ''}" data-view="cost">Cost</button>`;
     html += '</div>';
 
     // Project Content Area
@@ -375,8 +453,12 @@ class AgentDashboard {
 
     main.innerHTML = html;
 
-    // Render project content if a project is selected
-    if (this.currentView !== 'overview') {
+    // Render content based on current view
+    if (this.currentView === 'goals') {
+      this.renderGoalsView();
+    } else if (this.currentView === 'cost') {
+      this.renderCostView();
+    } else if (this.currentView !== 'overview') {
       this.renderProjectView(this.currentView);
     }
 
@@ -392,11 +474,11 @@ class AgentDashboard {
     if (!container) return;
 
     const project = this.registry.projects[projectName];
-    const scores = this.projectScores[projectName];
-    if (!project || !scores) {
+    if (!project) {
       container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">?</div><div class="empty-state-text">Project data not found</div></div>';
       return;
     }
+    const scores = this.projectScores[projectName] || this.generateFallbackScores(projectName);
 
     this.currentProject = projectName;
     const squads = this.registry.squads || {};
@@ -423,7 +505,40 @@ class AgentDashboard {
       grouped.inactive.push(name);
     });
 
-    let html = '<div class="kanban-board">';
+    // 스프린트 목표 패널
+    const sprint = this.goalsData.sprints ? this.goalsData.sprints[projectName] : null;
+    const mission = this.goalsData.missions ? this.goalsData.missions[projectName] : null;
+    let html = '';
+
+    if (sprint || mission) {
+      html += '<div class="sprint-panel">';
+      if (mission) {
+        html += `<div class="sprint-mission">${this.escapeHtml(mission.mission || '')} <span class="phase-badge">${this.escapeHtml(mission.currentPhase || '')}</span></div>`;
+      }
+      if (sprint) {
+        html += `<div class="sprint-header"><span class="sprint-name">${this.escapeHtml(sprint.sprintName || '')}</span><span class="sprint-dates">${sprint.startDate || ''} ~ ${sprint.endDate || ''}</span></div>`;
+        html += '<div class="sprint-goals">';
+        (sprint.goals || []).forEach(g => {
+          const statusCls = g.status === 'done' ? 'goal-done' : g.status === 'in-progress' ? 'goal-active' : 'goal-todo';
+          const priCls = g.priority === 'high' ? 'pri-high' : g.priority === 'low' ? 'pri-low' : 'pri-med';
+          html += `<div class="sprint-goal-card ${statusCls}" data-goal-id="${g.id}" data-project="${this.escapeHtml(projectName)}">
+            <div class="goal-card-top"><span class="goal-id">${g.id}</span><span class="goal-pri ${priCls}">${g.priority}</span></div>
+            <div class="goal-card-title">${this.escapeHtml(g.title)}</div>
+            <div class="goal-card-status"><select class="goal-status-select" data-goal-id="${g.id}" data-project="${this.escapeHtml(projectName)}">
+              <option value="todo" ${g.status === 'todo' ? 'selected' : ''}>대기</option>
+              <option value="in-progress" ${g.status === 'in-progress' ? 'selected' : ''}>진행중</option>
+              <option value="done" ${g.status === 'done' ? 'selected' : ''}>완료</option>
+            </select></div>
+          </div>`;
+        });
+        // 목표 추가 버튼
+        html += `<div class="sprint-goal-card goal-add" data-project="${this.escapeHtml(projectName)}"><div class="goal-add-icon">+</div><div class="goal-add-text">목표 추가</div></div>`;
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    html += '<div class="kanban-board">';
 
     squadKeys.forEach(squadKey => {
       const squad = squads[squadKey] || { name: 'Inactive', nameKr: '\ube44\ud65c\uc131', color: '#424242' };
@@ -455,18 +570,24 @@ class AgentDashboard {
     container.innerHTML = html;
     this.initDragAndDrop();
     this.bindKanbanCardEvents();
+    this.bindGoalEvents();
   }
 
   renderAgentCard(agentName, agentData, scoreData) {
     if (!agentData) return '';
 
-    const score = scoreData ? scoreData.totalScore : 800;
-    const rank = scoreData ? scoreData.rank : this.calculateRank(score);
     const model = scoreData ? (scoreData.currentModel || scoreData.model) : (agentData.recommendedModel || 'sonnet');
     const modelInfo = this.getModelIcon(model);
-    const pct = Math.round((score / 1000) * 100);
-
     const hasOvr = this.currentProject && this.hasOverrides(this.currentProject, agentName);
+
+    // 활동 로그에서 에이전트 정보 가져오기
+    const summary = this.logsSummary[this.currentProject];
+    const agentLog = summary && summary.agents ? summary.agents[agentName] : null;
+    const lastAction = agentLog && agentLog.lastAction;
+    const actCount = agentLog ? agentLog.total : 0;
+    const costStr = agentLog && agentLog.cost > 0 ? `$${agentLog.cost.toFixed(2)}` : '';
+    const lastStr = lastAction ? new Date(lastAction.ts).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }) + ' ' + (lastAction.action || '') : '';
+    const resultIcon = lastAction ? (lastAction.result === 'success' ? ' ✓' : lastAction.result === 'failure' ? ' ✗' : '') : '';
 
     return `
     <div class="agent-card squad-${agentData.squad || 'dev'}"
@@ -480,15 +601,15 @@ class AgentDashboard {
           <span class="agent-name-en">${this.escapeHtml(agentData.nameEn || '')}</span>
           ${hasOvr ? '<span class="overlay-indicator">OVR</span>' : ''}
         </div>
-        <span class="agent-rank-badge ${this.getRankClass(rank)}">${rank}</span>
+        <span class="agent-model-icon ${modelInfo.cls}">${modelInfo.icon} ${modelInfo.label}</span>
       </div>
       <div class="agent-role">${this.escapeHtml(agentData.role || agentData.roleEn || '')}</div>
-      <div class="agent-score-bar-container">
-        <div class="agent-score-bar" style="width:${pct}%;background:${this.getRankColor(rank)};"></div>
-      </div>
-      <div class="agent-card-bottom">
-        <span class="agent-score-text" style="color:${this.getRankColor(rank)}">${score}</span>
-        <span class="agent-model-icon ${modelInfo.cls}">${modelInfo.icon} ${modelInfo.label}</span>
+      <div class="agent-activity-info">
+        ${lastStr ? `<div class="agent-last-action">최근: ${lastStr}${resultIcon}</div>` : '<div class="agent-last-action" style="color:var(--text-muted)">활동 없음</div>'}
+        <div class="agent-card-bottom">
+          <span class="agent-activity-count">${actCount}회</span>
+          ${costStr ? `<span class="agent-cost-badge">${costStr}</span>` : ''}
+        </div>
       </div>
     </div>`;
   }
@@ -512,41 +633,52 @@ class AgentDashboard {
 
     const body = document.getElementById('modal-agent-body');
 
-    // Summary bar
+    // Summary bar (활동 기반)
+    const summary = this.logsSummary[projectName];
+    const agentLog = summary && summary.agents ? summary.agents[agentName] : null;
+    const actTotal = agentLog ? agentLog.total : 0;
+    const actSuccess = agentLog ? agentLog.success : 0;
+    const actRate = actTotal > 0 ? Math.round((actSuccess / actTotal) * 100) : 0;
+    const actCost = agentLog ? agentLog.cost : 0;
+
     let html = `
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;padding:12px;background:var(--bg-card);border-radius:var(--radius-sm);border:1px solid var(--border-color);">
-      <div>
-        <span class="agent-rank-badge ${this.getRankClass(rank)}" style="font-size:1.1rem;padding:4px 14px;">${this.getRankEmoji(rank)} ${rank}</span>
+      <div style="text-align:center;">
+        <div style="font-size:1.4rem;font-weight:700;color:var(--pink);">${actTotal}</div>
+        <div style="font-size:0.65rem;color:var(--text-muted);">활동</div>
       </div>
-      <div style="flex:1;">
-        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;">Score: ${score} / 1000</div>
-        ${this.createProgressBar(score, 1000, this.getRankColor(rank))}
+      <div style="text-align:center;">
+        <div style="font-size:1.4rem;font-weight:700;color:var(--green);">${actRate}%</div>
+        <div style="font-size:0.65rem;color:var(--text-muted);">성공률</div>
       </div>
+      <div style="text-align:center;">
+        <div style="font-size:1.4rem;font-weight:700;color:var(--cyan);">$${actCost.toFixed(2)}</div>
+        <div style="font-size:0.65rem;color:var(--text-muted);">비용</div>
+      </div>
+      <div style="flex:1;"></div>
       <div>
         <span class="agent-model-icon ${modelInfo.cls}" style="font-size:0.85rem;padding:4px 12px;">${modelInfo.icon} ${modelInfo.label}</span>
       </div>
     </div>
     <div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:16px;padding:0 4px;">${this.escapeHtml(agent.personality || '')}</div>`;
 
-    // Tabs
+    // Tabs (점수 탭 제거, 활동/비용 탭 추가)
     html += `
     <div class="modal-tabs">
-      <button class="modal-tab active" data-modal-tab="metrics">Metrics</button>
-      <button class="modal-tab" data-modal-tab="penalties">Penalties</button>
-      <button class="modal-tab" data-modal-tab="missions">Missions</button>
-      <button class="modal-tab" data-modal-tab="tasks">Recent Tasks</button>
-      <button class="modal-tab" data-modal-tab="model">Model Settings</button>
-      <button class="modal-tab" data-modal-tab="memory">Dev Memory</button>
+      <button class="modal-tab active" data-modal-tab="activity">활동 로그</button>
+      <button class="modal-tab" data-modal-tab="goals">목표 진행</button>
+      <button class="modal-tab" data-modal-tab="cost">비용</button>
+      <button class="modal-tab" data-modal-tab="model">Model</button>
+      <button class="modal-tab" data-modal-tab="memory">Memory</button>
       <button class="modal-tab" data-modal-tab="skills">Skills</button>
       <button class="modal-tab" data-modal-tab="overrides">Overrides</button>
       <button class="modal-tab" data-modal-tab="prompt">Prompt</button>
     </div>`;
 
     // Tab Contents
-    html += `<div class="modal-tab-content active" data-tab-panel="metrics">${this.renderMetrics(agentScore, agent)}</div>`;
-    html += `<div class="modal-tab-content" data-tab-panel="penalties">${this.renderPenalties(agentScore)}</div>`;
-    html += `<div class="modal-tab-content" data-tab-panel="missions">${this.renderImprovementMissions(agentScore)}</div>`;
-    html += `<div class="modal-tab-content" data-tab-panel="tasks">${this.renderRecentTasks(agentScore)}</div>`;
+    html += `<div class="modal-tab-content active" data-tab-panel="activity">${this.renderActivityLog(agentName, projectName)}</div>`;
+    html += `<div class="modal-tab-content" data-tab-panel="goals">${this.renderAgentGoals(agentName, projectName)}</div>`;
+    html += `<div class="modal-tab-content" data-tab-panel="cost">${this.renderAgentCost(agentName, projectName)}</div>`;
     html += `<div class="modal-tab-content" data-tab-panel="model">${this.renderModelSettings(agent, agentScore, projectName, agentName)}</div>`;
     html += `<div class="modal-tab-content" data-tab-panel="memory">${this.renderDevelopmentMemory(agentScore, agent)}</div>`;
     html += `<div class="modal-tab-content" data-tab-panel="skills">${this.renderSkillsManager(agentScore, agent, projectName, agentName)}</div>`;
@@ -562,6 +694,222 @@ class AgentDashboard {
 
   // ============================================================
   // Agent Profile Sections
+  // ============================================================
+
+  // ============================================================
+  // 활동 로그 탭 (에이전트 모달)
+  // ============================================================
+
+  renderActivityLog(agentName, projectName) {
+    const summary = this.logsSummary[projectName];
+    const recentLogs = summary ? (summary.recentLogs || []).filter(l => l.agent === agentName) : [];
+    if (recentLogs.length === 0) {
+      return '<div class="empty-state"><div class="empty-state-text">활동 로그 없음</div></div>';
+    }
+    const resultIcon = { success: '✓', failure: '✗', partial: '△', breakthrough: '★' };
+    let html = '';
+    recentLogs.slice(0, 15).forEach(l => {
+      const icon = resultIcon[l.result] || '?';
+      const cls = l.result === 'success' ? 'green' : l.result === 'failure' ? 'red' : l.result === 'breakthrough' ? 'gold' : 'orange';
+      const time = l.ts ? new Date(l.ts).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+      const costStr = l.cost ? `$${l.cost.toFixed(3)}` : '';
+      html += `<div class="log-entry">
+        <span class="log-icon" style="color:var(--${cls})">${icon}</span>
+        <span class="log-action">${this.escapeHtml(l.action)}</span>
+        <span class="log-summary">${this.escapeHtml(l.summary || '')}</span>
+        <span class="log-meta">${costStr} ${time}</span>
+      </div>`;
+    });
+    return html;
+  }
+
+  renderAgentGoals(agentName, projectName) {
+    const agent = this.registry.agents[agentName];
+    const sprint = this.goalsData.sprints ? this.goalsData.sprints[projectName] : null;
+    if (!sprint || !sprint.goals || sprint.goals.length === 0) {
+      return '<div class="empty-state"><div class="empty-state-text">스프린트 목표 없음</div></div>';
+    }
+    const squad = agent ? agent.squad : '';
+    const goals = sprint.goals.filter(g => !g.assignedSquads || g.assignedSquads.length === 0 || g.assignedSquads.includes(squad));
+    if (goals.length === 0) {
+      return '<div class="empty-state"><div class="empty-state-text">이 에이전트에 배정된 목표 없음</div></div>';
+    }
+    let html = `<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;">${sprint.sprintName} (${sprint.startDate} ~ ${sprint.endDate})</div>`;
+    goals.forEach(g => {
+      const statusCls = g.status === 'done' ? 'goal-done' : g.status === 'in-progress' ? 'goal-active' : 'goal-todo';
+      const priCls = g.priority === 'high' ? 'pri-high' : g.priority === 'low' ? 'pri-low' : 'pri-med';
+      html += `<div class="goal-item ${statusCls}"><span class="goal-id">${g.id}</span><span class="goal-title">${this.escapeHtml(g.title)}</span><span class="goal-pri ${priCls}">${g.priority}</span><span class="goal-status">${g.status}</span></div>`;
+    });
+    return html;
+  }
+
+  renderAgentCost(agentName, projectName) {
+    const summary = this.logsSummary[projectName];
+    const agentLog = summary && summary.agents ? summary.agents[agentName] : null;
+    if (!agentLog || agentLog.total === 0) {
+      return '<div class="empty-state"><div class="empty-state-text">비용 데이터 없음</div></div>';
+    }
+    const avgCost = agentLog.cost / agentLog.total;
+    const agent = this.registry.agents[agentName] || {};
+    const costMatrix = this.registry.modelCostMatrix || {};
+    let html = `
+    <div class="cost-summary-grid">
+      <div class="cost-stat"><div class="cost-stat-value">$${agentLog.cost.toFixed(3)}</div><div class="cost-stat-label">총 비용</div></div>
+      <div class="cost-stat"><div class="cost-stat-value">${agentLog.total}</div><div class="cost-stat-label">총 활동</div></div>
+      <div class="cost-stat"><div class="cost-stat-value">$${avgCost.toFixed(3)}</div><div class="cost-stat-label">건당 평균</div></div>
+    </div>`;
+    // 모델 비교
+    html += '<div style="margin-top:16px;font-size:0.75rem;color:var(--text-muted);">모델별 예상 비용 (동일 작업량 기준)</div>';
+    ['haiku', 'sonnet', 'opus'].forEach(m => {
+      const c = costMatrix[m] || {};
+      const est = (c.costPerMillionTokens || 0) * agentLog.total * 0.015; // rough estimate
+      const isCurrent = (agent.recommendedModel || 'sonnet') === m;
+      html += `<div style="display:flex;justify-content:space-between;padding:4px 0;${isCurrent ? 'font-weight:700;color:var(--text-primary)' : ''}">
+        <span>${m}${isCurrent ? ' (현재)' : ''}</span><span>~$${est.toFixed(3)}</span></div>`;
+    });
+    return html;
+  }
+
+  // ============================================================
+  // Goals 탑레벨 뷰
+  // ============================================================
+
+  renderGoalsView() {
+    const container = document.getElementById('project-content');
+    if (!container) return;
+    let html = '<div class="goals-full-view">';
+    html += '<h2 class="view-title">Sprint Goals</h2>';
+
+    const projects = Object.keys(this.registry.projects || {});
+    projects.forEach(projName => {
+      const sprint = this.goalsData.sprints ? this.goalsData.sprints[projName] : null;
+      const mission = this.goalsData.missions ? this.goalsData.missions[projName] : null;
+      html += `<div class="goal-project-section">`;
+      html += `<div class="goal-project-header">
+        <span class="goal-project-title">${this.escapeHtml(projName)}</span>
+        ${mission ? `<span class="goal-mission-text">${this.escapeHtml(mission.mission || '')}</span>` : ''}
+      </div>`;
+
+      if (sprint && sprint.goals && sprint.goals.length > 0) {
+        html += `<div class="sprint-info">${this.escapeHtml(sprint.sprintName || '')} (${sprint.startDate || ''} ~ ${sprint.endDate || ''})</div>`;
+        html += '<div class="sprint-goals">';
+        sprint.goals.forEach(g => {
+          const statusCls = g.status === 'done' ? 'goal-done' : g.status === 'in-progress' ? 'goal-active' : 'goal-todo';
+          const priCls = g.priority === 'high' ? 'pri-high' : g.priority === 'low' ? 'pri-low' : 'pri-med';
+          html += `<div class="sprint-goal-card ${statusCls}" data-goal-id="${g.id}" data-project="${this.escapeHtml(projName)}">
+            <div class="goal-card-top"><span class="goal-id">${g.id}</span><span class="goal-pri ${priCls}">${g.priority}</span></div>
+            <div class="goal-card-title">${this.escapeHtml(g.title)}</div>
+            <div class="goal-card-status"><select class="goal-status-select" data-goal-id="${g.id}" data-project="${this.escapeHtml(projName)}">
+              <option value="todo" ${g.status === 'todo' ? 'selected' : ''}>대기</option>
+              <option value="in-progress" ${g.status === 'in-progress' ? 'selected' : ''}>진행중</option>
+              <option value="done" ${g.status === 'done' ? 'selected' : ''}>완료</option>
+            </select></div>
+          </div>`;
+        });
+        html += `<div class="sprint-goal-card goal-add" data-project="${this.escapeHtml(projName)}"><div class="goal-add-icon">+</div><div class="goal-add-text">목표 추가</div></div>`;
+        html += '</div>';
+      } else {
+        html += `<div class="empty-state" style="padding:12px;"><div class="empty-state-text">목표 없음</div></div>`;
+        html += `<div class="sprint-goals"><div class="sprint-goal-card goal-add" data-project="${this.escapeHtml(projName)}"><div class="goal-add-icon">+</div><div class="goal-add-text">목표 추가</div></div></div>`;
+      }
+      html += '</div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+    this.bindGoalEvents();
+  }
+
+  // ============================================================
+  // Cost 탑레벨 뷰
+  // ============================================================
+
+  renderCostView() {
+    const container = document.getElementById('project-content');
+    if (!container) return;
+    let html = '<div class="cost-full-view">';
+    html += '<h2 class="view-title">Cost Dashboard</h2>';
+
+    let grandTotal = 0, grandCount = 0;
+    const projects = Object.keys(this.registry.projects || {});
+    const costMatrix = this.registry.modelCostMatrix || {};
+
+    // 프로젝트별 요약
+    html += '<div class="cost-projects-grid">';
+    projects.forEach(projName => {
+      const logData = this.logsData[projName] || { total: 0, cost: 0 };
+      grandTotal += logData.cost || 0;
+      grandCount += logData.total || 0;
+      html += `<div class="cost-project-card">
+        <div class="cost-project-name">${this.escapeHtml(projName)}</div>
+        <div class="cost-project-value">$${(logData.cost || 0).toFixed(3)}</div>
+        <div class="cost-project-count">${logData.total || 0}건</div>
+      </div>`;
+    });
+    html += '</div>';
+
+    // 총계
+    html += `<div class="cost-total-bar"><span>총 추정 비용</span><span class="cost-total-value">$${grandTotal.toFixed(3)}</span><span>${grandCount}건</span></div>`;
+
+    // 모델별 비용 가이드
+    html += '<div class="cost-model-guide"><h3>모델 비용 가이드</h3>';
+    ['haiku', 'sonnet', 'opus'].forEach(m => {
+      const c = costMatrix[m] || {};
+      html += `<div class="cost-model-row">
+        <span class="agent-model-icon model-${m}" style="padding:2px 8px;">${m}</span>
+        <span>Input: $${(c.inputCostPerMillion || 0).toFixed(2)}/M</span>
+        <span>Output: $${(c.outputCostPerMillion || 0).toFixed(2)}/M</span>
+        <span style="color:var(--text-muted);">${this.escapeHtml(c.recommendedFor || '')}</span>
+      </div>`;
+    });
+    html += '</div>';
+
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  // ============================================================
+  // Goal Event Bindings
+  // ============================================================
+
+  bindGoalEvents() {
+    // 상태 변경 select
+    document.querySelectorAll('.goal-status-select').forEach(sel => {
+      sel.addEventListener('change', async (e) => {
+        const goalId = e.target.dataset.goalId;
+        const project = e.target.dataset.project;
+        try {
+          await fetch(`/api/goals/sprint/${encodeURIComponent(project)}/${encodeURIComponent(goalId)}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: e.target.value })
+          });
+          await this.loadGoals();
+          this.renderMainView();
+        } catch (err) { console.error('Goal update failed:', err); }
+      });
+    });
+
+    // 목표 추가 버튼
+    document.querySelectorAll('.goal-add').forEach(el => {
+      el.addEventListener('click', async () => {
+        const project = el.dataset.project;
+        const title = prompt('새 목표 제목:');
+        if (!title) return;
+        const priority = prompt('우선순위 (high/medium/low):', 'medium') || 'medium';
+        try {
+          await fetch(`/api/goals/sprint/${encodeURIComponent(project)}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, priority })
+          });
+          await this.loadGoals();
+          this.renderMainView();
+        } catch (err) { console.error('Goal add failed:', err); }
+      });
+    });
+  }
+
+  // ============================================================
+  // Agent Profile Sections (Legacy - kept for compatibility)
   // ============================================================
 
   renderMetrics(agentScore, agent) {

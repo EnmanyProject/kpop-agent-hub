@@ -1,0 +1,36 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-03-30",
+  "missions": {
+    "Wedding": {
+      "mission": "모바일 청첩장 플랫폼으로 커플들의 특별한 순간을 디지털로 완성한다",
+      "keyMetrics": ["사용자 만족도", "모바일 최적화율", "결제 전환율"],
+      "currentPhase": "growth"
+    },
+    "Xgram": {
+      "mission": "AI 기반 소셜 채팅 게임 플랫폼",
+      "keyMetrics": ["DAU", "채팅 참여율", "리텐션"],
+      "currentPhase": "mvp"
+    },
+    "Wait": {
+      "mission": "Flutter 기반 크로스플랫폼 서비스",
+      "keyMetrics": ["플랫폼 호환성", "성능 최적화"],
+      "currentPhase": "development"
+    },
+    "Rich": {
+      "mission": "퀴즈 기반 재테크 교육 게임 — 3자 수익 분배 플랫폼",
+      "keyMetrics": ["퀴즈 참여율", "포인트 정산 정확도", "Anti-Cheat 방어율"],
+      "currentPhase": "mvp"
+    },
+    "Cons": {
+      "mission": "Flutter 기반 컨설팅 서비스 플랫폼",
+      "keyMetrics": [],
+      "currentPhase": "development"
+    },
+    "Bdating": {
+      "mission": "Flutter 기반 데이팅 서비스 플랫폼",
+      "keyMetrics": [],
+      "currentPhase": "development"
+    }
+  }
+}

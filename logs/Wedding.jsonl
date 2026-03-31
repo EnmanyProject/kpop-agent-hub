@@ -1,0 +1,1 @@
+{"ts":"2026-03-30T15:16:11.400Z","agent":"진","action":"cleanup","model":"opus","goal":null,"files":[".claude/commands/manager.md"],"result":"success","summary":"chore: 진 매니저 업데이트 — 자동 목표 등록 + E2E 리포트 + 비용 인식","commit":"5ab176b","source":"git-hook"}

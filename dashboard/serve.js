@@ -305,6 +305,203 @@ function handleApiOverlayDelete(req, res, projectName) {
 }
 
 // ============================================================
+// Goals API Handlers (Paperclip 컨셉)
+// ============================================================
+
+const GOALS_DIR = path.join(AGENTS_DIR, 'goals');
+const LOGS_DIR_PATH = path.join(AGENTS_DIR, 'logs');
+
+function handleApiGoals(req, res) {
+  try {
+    const missionPath = path.join(GOALS_DIR, 'mission.json');
+    const sprintsPath = path.join(GOALS_DIR, 'sprints.json');
+    const missions = fs.existsSync(missionPath) ? JSON.parse(fs.readFileSync(missionPath, 'utf8')) : { missions: {} };
+    const sprints = fs.existsSync(sprintsPath) ? JSON.parse(fs.readFileSync(sprintsPath, 'utf8')) : { sprints: {} };
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ missions: missions.missions, sprints: sprints.sprints }));
+  } catch (e) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: e.message }));
+  }
+}
+
+function handleApiGoalsMissionUpdate(req, res, projectName) {
+  let body = '';
+  req.on('data', chunk => { body += chunk; });
+  req.on('end', () => {
+    try {
+      const { mission, keyMetrics, currentPhase } = JSON.parse(body);
+      const missionPath = path.join(GOALS_DIR, 'mission.json');
+      const data = fs.existsSync(missionPath) ? JSON.parse(fs.readFileSync(missionPath, 'utf8')) : { version: '1.0.0', missions: {} };
+      if (!data.missions[projectName]) data.missions[projectName] = {};
+      if (mission !== undefined) data.missions[projectName].mission = mission;
+      if (keyMetrics !== undefined) data.missions[projectName].keyMetrics = keyMetrics;
+      if (currentPhase !== undefined) data.missions[projectName].currentPhase = currentPhase;
+      data.lastUpdated = new Date().toISOString().split('T')[0];
+      fs.writeFileSync(missionPath, JSON.stringify(data, null, 2), 'utf8');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ saved: true }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+  });
+}
+
+function handleApiSprintGoalAdd(req, res, projectName) {
+  let body = '';
+  req.on('data', chunk => { body += chunk; });
+  req.on('end', () => {
+    try {
+      const { title, priority, assignedSquads } = JSON.parse(body);
+      const sprintsPath = path.join(GOALS_DIR, 'sprints.json');
+      const data = fs.existsSync(sprintsPath) ? JSON.parse(fs.readFileSync(sprintsPath, 'utf8')) : { version: '1.0.0', sprints: {} };
+      if (!data.sprints[projectName]) {
+        data.sprints[projectName] = { sprintName: 'Sprint', startDate: '', endDate: '', goals: [] };
+      }
+      const goals = data.sprints[projectName].goals;
+      const prefix = projectName.charAt(0).toUpperCase();
+      const nums = goals.map(g => parseInt(g.id.split('-')[1])).filter(n => !isNaN(n));
+      const next = nums.length > 0 ? Math.max(...nums) + 1 : 1;
+      const id = `${prefix}-${String(next).padStart(3, '0')}`;
+      goals.push({ id, title, priority: priority || 'medium', status: 'todo', assignedSquads: assignedSquads || [] });
+      data.lastUpdated = new Date().toISOString().split('T')[0];
+      fs.writeFileSync(sprintsPath, JSON.stringify(data, null, 2), 'utf8');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ id, saved: true }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+  });
+}
+
+function handleApiSprintGoalUpdate(req, res, projectName, goalId) {
+  let body = '';
+  req.on('data', chunk => { body += chunk; });
+  req.on('end', () => {
+    try {
+      const updates = JSON.parse(body);
+      const sprintsPath = path.join(GOALS_DIR, 'sprints.json');
+      const data = JSON.parse(fs.readFileSync(sprintsPath, 'utf8'));
+      const goal = data.sprints[projectName]?.goals.find(g => g.id === goalId);
+      if (!goal) { res.writeHead(404); res.end(JSON.stringify({ error: 'Goal not found' })); return; }
+      if (updates.status) goal.status = updates.status;
+      if (updates.title) goal.title = updates.title;
+      if (updates.priority) goal.priority = updates.priority;
+      if (goal.status === 'done') goal.completedAt = new Date().toISOString().split('T')[0];
+      data.lastUpdated = new Date().toISOString().split('T')[0];
+      fs.writeFileSync(sprintsPath, JSON.stringify(data, null, 2), 'utf8');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ saved: true }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+  });
+}
+
+function handleApiSprintGoalDelete(req, res, projectName, goalId) {
+  try {
+    const sprintsPath = path.join(GOALS_DIR, 'sprints.json');
+    const data = JSON.parse(fs.readFileSync(sprintsPath, 'utf8'));
+    const goals = data.sprints[projectName]?.goals;
+    if (!goals) { res.writeHead(404); res.end(JSON.stringify({ error: 'Project not found' })); return; }
+    const idx = goals.findIndex(g => g.id === goalId);
+    if (idx === -1) { res.writeHead(404); res.end(JSON.stringify({ error: 'Goal not found' })); return; }
+    goals.splice(idx, 1);
+    data.lastUpdated = new Date().toISOString().split('T')[0];
+    fs.writeFileSync(sprintsPath, JSON.stringify(data, null, 2), 'utf8');
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ deleted: true }));
+  } catch (e) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: e.message }));
+  }
+}
+
+// ============================================================
+// Activity Log API Handlers
+// ============================================================
+
+function handleApiLogs(req, res, projectName) {
+  try {
+    const logPath = path.join(LOGS_DIR_PATH, `${projectName}.jsonl`);
+    if (!fs.existsSync(logPath)) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([]));
+      return;
+    }
+    const logs = fs.readFileSync(logPath, 'utf8')
+      .split('\n').filter(l => l.trim())
+      .map(l => { try { return JSON.parse(l); } catch { return null; } })
+      .filter(Boolean);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(logs));
+  } catch (e) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: e.message }));
+  }
+}
+
+function handleApiLogsSummary(req, res, projectName) {
+  try {
+    const logPath = path.join(LOGS_DIR_PATH, `${projectName}.jsonl`);
+    if (!fs.existsSync(logPath)) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ agents: {}, total: 0, totalCost: 0 }));
+      return;
+    }
+    const logs = fs.readFileSync(logPath, 'utf8')
+      .split('\n').filter(l => l.trim())
+      .map(l => { try { return JSON.parse(l); } catch { return null; } })
+      .filter(Boolean);
+
+    const agents = {};
+    let totalCost = 0;
+    logs.forEach(l => {
+      if (!agents[l.agent]) agents[l.agent] = { total: 0, success: 0, cost: 0, lastAction: null };
+      agents[l.agent].total++;
+      if (l.result === 'success' || l.result === 'breakthrough') agents[l.agent].success++;
+      if (l.cost) { agents[l.agent].cost += l.cost; totalCost += l.cost; }
+      agents[l.agent].lastAction = l;
+    });
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ agents, total: logs.length, totalCost, recentLogs: logs.slice(-20).reverse() }));
+  } catch (e) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: e.message }));
+  }
+}
+
+function handleApiAllLogs(req, res) {
+  try {
+    if (!fs.existsSync(LOGS_DIR_PATH)) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({}));
+      return;
+    }
+    const result = {};
+    fs.readdirSync(LOGS_DIR_PATH).filter(f => f.endsWith('.jsonl')).forEach(f => {
+      const project = f.replace('.jsonl', '');
+      const logs = fs.readFileSync(path.join(LOGS_DIR_PATH, f), 'utf8')
+        .split('\n').filter(l => l.trim())
+        .map(l => { try { return JSON.parse(l); } catch { return null; } })
+        .filter(Boolean);
+      let cost = 0;
+      logs.forEach(l => { if (l.cost) cost += l.cost; });
+      result[project] = { total: logs.length, cost, recent: logs.slice(-5).reverse() };
+    });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(result));
+  } catch (e) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: e.message }));
+  }
+}
+
+// ============================================================
 // File Write API Handler
 // ============================================================
 
@@ -351,6 +548,45 @@ const server = http.createServer((req, res) => {
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
     res.end();
+    return;
+  }
+
+  // API: Goals endpoints
+  if (req.method === 'GET' && urlPath === '/api/goals') {
+    handleApiGoals(req, res);
+    return;
+  }
+  if (urlPath.match(/^\/api\/goals\/mission\//) && req.method === 'PUT') {
+    const proj = decodeURIComponent(urlPath.replace('/api/goals/mission/', ''));
+    handleApiGoalsMissionUpdate(req, res, proj);
+    return;
+  }
+  if (urlPath.match(/^\/api\/goals\/sprint\/[^/]+$/) && req.method === 'POST') {
+    const proj = decodeURIComponent(urlPath.replace('/api/goals/sprint/', ''));
+    handleApiSprintGoalAdd(req, res, proj);
+    return;
+  }
+  if (urlPath.match(/^\/api\/goals\/sprint\/[^/]+\/[^/]+$/)) {
+    const parts = urlPath.replace('/api/goals/sprint/', '').split('/');
+    const proj = decodeURIComponent(parts[0]);
+    const goalId = decodeURIComponent(parts[1]);
+    if (req.method === 'PUT') { handleApiSprintGoalUpdate(req, res, proj, goalId); return; }
+    if (req.method === 'DELETE') { handleApiSprintGoalDelete(req, res, proj, goalId); return; }
+  }
+
+  // API: Activity Log endpoints
+  if (req.method === 'GET' && urlPath === '/api/logs') {
+    handleApiAllLogs(req, res);
+    return;
+  }
+  if (req.method === 'GET' && urlPath.match(/^\/api\/logs\/[^/]+\/summary$/)) {
+    const proj = decodeURIComponent(urlPath.replace('/api/logs/', '').replace('/summary', ''));
+    handleApiLogsSummary(req, res, proj);
+    return;
+  }
+  if (req.method === 'GET' && urlPath.match(/^\/api\/logs\/[^/]+$/) && urlPath !== '/api/logs') {
+    const proj = decodeURIComponent(urlPath.replace('/api/logs/', ''));
+    handleApiLogs(req, res, proj);
     return;
   }
 
@@ -446,15 +682,23 @@ server.listen(PORT, () => {
   console.log(`  /projects/  → ${BASE_DIR}`);
   console.log('');
   console.log('API:');
-  console.log('  POST /api/write              → JSON 파일 쓰기');
-  console.log('  GET  /api/projects           → 프로젝트 목록');
-  console.log('  GET  /api/templates          → 템플릿 목록');
-  console.log('  GET  /api/templates/:name    → 템플릿 읽기');
-  console.log('  POST /api/templates/:name    → 템플릿 저장 + 재생성');
-  console.log('  GET  /api/overlays           → 오버라이드 목록');
-  console.log('  GET  /api/overlays/:project  → 오버라이드 읽기');
-  console.log('  PUT  /api/overlays/:project  → 오버라이드 저장');
-  console.log('  DELETE /api/overlays/:project → 오버라이드 초기화');
+  console.log('  POST /api/write                       → JSON 파일 쓰기');
+  console.log('  GET  /api/projects                    → 프로젝트 목록');
+  console.log('  GET  /api/templates                   → 템플릿 목록');
+  console.log('  GET  /api/templates/:name             → 템플릿 읽기');
+  console.log('  POST /api/templates/:name             → 템플릿 저장 + 재생성');
+  console.log('  GET  /api/overlays                    → 오버라이드 목록');
+  console.log('  GET  /api/overlays/:project           → 오버라이드 읽기');
+  console.log('  PUT  /api/overlays/:project           → 오버라이드 저장');
+  console.log('  DELETE /api/overlays/:project         → 오버라이드 초기화');
+  console.log('  GET  /api/goals                       → 미션 + 스프린트 목표');
+  console.log('  PUT  /api/goals/mission/:project      → 미션 업데이트');
+  console.log('  POST /api/goals/sprint/:project       → 스프린트 목표 추가');
+  console.log('  PUT  /api/goals/sprint/:project/:id   → 목표 상태 변경');
+  console.log('  DELETE /api/goals/sprint/:project/:id → 목표 삭제');
+  console.log('  GET  /api/logs                        → 전체 로그 요약');
+  console.log('  GET  /api/logs/:project               → 프로젝트 로그');
+  console.log('  GET  /api/logs/:project/summary       → 로그 집계');
   console.log('');
   console.log('Ctrl+C로 종료');
   console.log('═══════════════════════════════');

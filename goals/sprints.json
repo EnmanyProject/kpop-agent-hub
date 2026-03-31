@@ -1,0 +1,91 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-03-30",
+  "sprints": {
+    "Wedding": {
+      "sprintName": "Sprint 2026-W14",
+      "startDate": "2026-03-30",
+      "endDate": "2026-04-13",
+      "goals": []
+    },
+    "Xgram": {
+      "sprintName": "Sprint 2026-W14",
+      "startDate": "2026-03-30",
+      "endDate": "2026-04-13",
+      "goals": []
+    },
+    "Wait": {
+      "sprintName": "Sprint 2026-W14",
+      "startDate": "2026-03-30",
+      "endDate": "2026-04-13",
+      "goals": [
+        {
+          "id": "W-001",
+          "title": "로딩 스피너 공통 컴포넌트 추가",
+          "priority": "medium",
+          "status": "done",
+          "assignedSquads": [
+            "dev"
+          ],
+          "completedAt": "2026-03-30"
+        }
+      ]
+    },
+    "Cons": {
+      "sprintName": "Sprint 2026-W14",
+      "startDate": "2026-03-30",
+      "endDate": "2026-04-13",
+      "goals": [
+        {
+          "id": "C-001",
+          "title": "메인 화면 UI 구현",
+          "priority": "medium",
+          "status": "todo",
+          "assignedSquads": []
+        },
+        {
+          "id": "C-002",
+          "title": "PWA 텍스트 로드 전 플레이스홀더 깜빡임 수정",
+          "priority": "high",
+          "status": "done",
+          "assignedSquads": [
+            "dev"
+          ],
+          "completedAt": "2026-03-30"
+        }
+      ]
+    },
+    "Bdating": {
+      "sprintName": "Sprint 2026-W14",
+      "startDate": "2026-03-30",
+      "endDate": "2026-04-13",
+      "goals": []
+    },
+    "Rich": {
+      "sprintName": "Sprint 2026-W14",
+      "startDate": "2026-03-30",
+      "endDate": "2026-04-13",
+      "goals": [
+        {
+          "id": "R-001",
+          "title": "배틀로얄 실시간 안정화",
+          "priority": "high",
+          "status": "todo",
+          "assignedSquads": [
+            "dev",
+            "qa"
+          ]
+        },
+        {
+          "id": "R-002",
+          "title": "소셜 기능 MVP",
+          "priority": "medium",
+          "status": "todo",
+          "assignedSquads": [
+            "dev"
+          ]
+        }
+      ]
+    }
+  }
+}

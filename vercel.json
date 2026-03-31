@@ -4,7 +4,9 @@
     { "source": "/index.html", "destination": "/dashboard/index.html" },
     { "source": "/dashboard.js", "destination": "/dashboard/dashboard.js" },
     { "source": "/styles.css", "destination": "/dashboard/styles.css" },
-    { "source": "/data/registry.json", "destination": "/registry.json" }
+    { "source": "/data/registry.json", "destination": "/registry.json" },
+    { "source": "/bundled-data.json", "destination": "/dashboard/bundled-data.json" },
+    { "source": "/bundled-scores.json", "destination": "/dashboard/bundled-scores.json" }
   ],
   "headers": [
     {

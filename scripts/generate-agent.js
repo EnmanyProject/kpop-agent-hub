@@ -27,6 +27,38 @@ function loadProjectConfig(projectPath) {
   return null;
 }
 
+// 목표 계층 로딩 (Paperclip 컨셉)
+function loadMission(projectName) {
+  const missionPath = path.join(AGENTS_DIR, 'goals', 'mission.json');
+  if (fs.existsSync(missionPath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(missionPath, 'utf8'));
+      return data.missions[projectName] || null;
+    } catch (e) { return null; }
+  }
+  return null;
+}
+
+function loadSprint(projectName) {
+  const sprintPath = path.join(AGENTS_DIR, 'goals', 'sprints.json');
+  if (fs.existsSync(sprintPath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(sprintPath, 'utf8'));
+      return data.sprints[projectName] || null;
+    } catch (e) { return null; }
+  }
+  return null;
+}
+
+function formatSprintGoals(sprint) {
+  if (!sprint || !sprint.goals || sprint.goals.length === 0) return '(목표 미설정)';
+  const statusIcon = { 'todo': '○', 'in-progress': '●', 'done': '✓' };
+  return sprint.goals.map(g => {
+    const icon = statusIcon[g.status] || '?';
+    return `- ${icon} **${g.id}** ${g.title} (${g.priority}) [${g.status}]`;
+  }).join('\n');
+}
+
 function loadOverlay(projectName) {
   const overlayPath = path.join(OVERLAYS_DIR, `${projectName}.json`);
   if (fs.existsSync(overlayPath)) {
@@ -80,43 +112,17 @@ function getAgentMatrix(registry, projectName) {
   return [header, separator, ...rows].join('\n');
 }
 
-function getSelfMemoryFooter(agentName, projectName, projectPath) {
-  const scoresPath = path.join(projectPath, '.claude', 'agent-scores.json').replace(/\\/g, '/');
+// 활동 로그 안내 푸터 (git post-commit hook이 자동 기록)
+function getActivityLogFooter(agentName, agentCommand, projectName) {
   return `
 
 ---
 
-## 이력서 (개발 메모리) 참조 - 필수!
+## 활동 기록
 
-**작업 시작 전, 반드시 자신의 이력서를 읽어라.**
-
-\`\`\`
-Read 도구로 다음 파일을 읽는다:
-${scoresPath}
-\`\`\`
-
-이 파일의 \`agents.${agentName}.developmentMemory\` 섹션에서:
-
-1. **과거 실수 패턴 확인** (\`fixPatterns.incorrectDiagnosis\`)
-   - 같은 실수를 반복하지 않는다
-   - 과거에 잘못된 접근법이 기록되어 있으면 그 방법을 피한다
-
-2. **성공 패턴 확인** (\`fixPatterns.successfulPatterns\`)
-   - 과거에 성공한 접근법이 있으면 우선 사용한다
-
-3. **파일 전문성 확인** (\`technicalKnowledge.fileExpertise\`)
-   - 자주 수정한 파일의 성공률을 확인한다
-   - 성공률이 낮은 파일은 더 신중하게 접근한다
-
-4. **코드 리뷰 피드백 확인** (\`codeReviewFeedback\`)
-   - 수호로부터 받은 피드백 중 반복되는 이슈를 확인한다
-   - 같은 지적을 받지 않도록 주의한다
-
-5. **현재 개선 미션 확인** (\`improvementMissions\`)
-   - 활성 미션이 있으면 이번 작업에서 개선 기회로 삼는다
-
-**이력서가 없거나 비어있으면 무시하고 작업을 진행한다.**
-**이력서 참조에 실패해도 작업은 계속 진행한다.**
+git commit 시 post-commit hook이 자동으로 활동을 기록한다.
+커밋 메시지에 작업 내용을 명확히 적으면 자동 분류된다.
+수동 기록이 필요하면: \`node C:/Users/dosik/.claude/agents/scripts/log-activity.js ${projectName} ${agentName} ${agentCommand} [result] "[요약]"\`
 `;
 }
 
@@ -260,6 +266,10 @@ function generateAgent(projectName, agentName) {
   const customizations = resolveCustomizations(registry, projectConfig, agentName);
   const overlay = loadOverlay(projectName);
 
+  // 목표 계층 로딩
+  const mission = loadMission(projectName);
+  const sprint = loadSprint(projectName);
+
   // 3-layer merge: overlay > legacy > base
   const resolved = resolveAgent(agent, agentName, overlay, customizations);
 
@@ -291,7 +301,12 @@ function generateAgent(projectName, agentName) {
     AGENT_TASK_MAP: getAgentTaskMap(registry, projectName),
     ADDITIONAL_CONTEXT: resolved.additionalContext,
     EXPERTISE: resolved.expertise.join(', '),
-    CUSTOM_SECTIONS: ''
+    CUSTOM_SECTIONS: '',
+    // 목표 계층 변수 (Paperclip 컨셉)
+    PROJECT_MISSION: mission ? mission.mission : '(미션 미설정)',
+    PROJECT_PHASE: mission ? mission.currentPhase : '',
+    SPRINT_NAME: sprint ? sprint.sprintName : '(스프린트 미설정)',
+    SPRINT_GOALS: formatSprintGoals(sprint)
   };
 
   // Substitute
@@ -300,10 +315,8 @@ function generateAgent(projectName, agentName) {
   // Apply template patches from overlay
   output = applyTemplatePatches(output, resolved.templatePatches);
 
-  // Append self-memory footer to all agents (except manager who evaluates others)
-  if (agent.command !== 'manager') {
-    output += getSelfMemoryFooter(agentName, projectName, projectPath);
-  }
+  // 활동 로그 푸터 추가 (모든 에이전트)
+  output += getActivityLogFooter(agentName, agent.command, projectName);
 
   // Write to project commands directory
   const commandsDir = path.join(projectPath, '.claude', 'commands');
